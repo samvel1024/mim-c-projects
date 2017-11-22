@@ -1,61 +1,83 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 #define BLACK_PLAYER_STRATEGY make_turn_ai
 #define WHITE_PLAYER_STRATEGY make_turn_player
 
-//Implementation of type Position
+//Implementation of type Turn
 typedef struct turn_t {
-    int row;
-    int col;
-    int is_pass;
+  int row;
+  int col;
+  int is_pass;
 } Turn;
 
-Turn Turn_from_str(char f, char s)
-{
-    Position p = {
-        .row = f - 'A',
-        .col = f - '0'
-    };
-    return p;
+Turn Turn_from_str(char f, char s) {
+  Turn p = {
+    .row = f - 'A',
+    .col = f - '0'
+  };
+  return p;
 }
 
 //Implementation of type game
+struct people;
 
-struct Game {
-    Player white;
-    Player black;
+typedef struct {
+  /* same as before */
+  struct people *friends;
+} Person;
+
+typedef struct people {
+  /* same as before */
+} People;
+
+
+struct player_t;
+
+typedef struct {
+
+  int board[][];
+  int is_running;
+  int loop_counter;
+  struct player_t *white_player;
+  struct player_t *black_player;
+
+
+} Game;
+
+void Game_loop(Game *game){
+  game->black_player->make_turn;
+}
+
+typedef struct player_t {
+  Turn (*make_turn)(Game *game, Turn last_turn);
+} Player;
+
+
+/*
+ * Impl of computer player
+ */
+Turn make_turn_ai(Game *game, Turn last) {
 
 }
 
-struct Player {
-    int (*make_turn)(int a);
-};
 
-Position make_turn_ai(*Game game)
-{
-    return in * 2;
+/*
+ * Impl of player from std input
+ */
+Turn make_turn_std_input(Game *game, Turn last) {
+  char r, c;
+  return Turn_from_str(r, c);
 }
 
-Position make_turn_player(int in)
-{
-    char r, c;
-    return scanf("%c%c", &r, &c);
-}
-
-struct Player black = {
-    .make_turn = BLACK_PLAYER_STRATEGY
-};
-
-struct Player white = {
-    .make_turn = WHITE_PLAYER_STRATEGY
-};
-
-int main()
-{
-    int i;
-    scanf("%d", &i);
-    int ai_out = white.make_turn(i);
-    int player_out = black.make_turn(i);
-    printf("%d %d", ai_out, player_out);
-    return 0;
+int main() {
+  Player *black = malloc(sizeof(Player));
+  black->make_turn = make_turn_ai;
+  Player *white = malloc(sizeof(Player));
+  white->make_turn = make_turn_std_input;
+  Game *game = malloc(sizeof(Game));
+  game->white_player = white;
+  game->black_player = black;
+  free(game);
+  return 0;
 }

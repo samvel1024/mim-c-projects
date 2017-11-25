@@ -1,9 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <ctype.h>
 
+#define MODE_DEBUG
 
+#ifdef MODE_DEBUG
 #define ENABLE_LOG
+#endif
+
+
 #ifdef ENABLE_LOG
 #define log printf
 #else
@@ -20,10 +26,17 @@
 #define BLACK 1
 #define WHITE (-1)
 
+#ifdef MODE_DEBUG
 #define FREE_VIEW '-'
 #define BLACK_VIEW 'B'
 #define WHITE_VIEW 'W'
 #define CELL_FORMAT " %c "
+#else
+#define FREE_VIEW '-'
+#define BLACK_VIEW 'C'
+#define WHITE_VIEW 'B'
+#define CELL_FORMAT "%c"
+#endif
 
 typedef int Board[SIZE][SIZE];
 
@@ -113,12 +126,16 @@ Turn make_turn_player(Board *b, int color) {
   UNUSED(b);
   UNUSED(color);
   char first, second;
-  scanf("%c", &first);
+  do {
+    scanf("%c", &first);
+  }while(isspace(first));
+  log("Reading %c as first input char\n", first);
   if (first == '=') {
     Turn t = {.pass = true, .pos = {.c = 0, .r = 0}};
     return t;
   }
   scanf("%c", &second);
+  log("Reading %c as second input char\n", second);
   Turn t = {
     .pass = false,
     .pos = {
@@ -126,7 +143,10 @@ Turn make_turn_player(Board *b, int color) {
       .c = first - 'a'
     }
   };
-
+  if (!Vector_is_in_bounds(t.pos)){
+    log("Entered position is out of bounds\n");
+    exit(1);
+  }
   return t;
 }
 
@@ -150,17 +170,18 @@ int flip_pieces_by_direction(Board *b, Turn t, int color, Vector dir) {
       *b[pos.r][pos.c] = color;
     }
   }
+  log("Flipped %d pieces in direction [%d, %d] from [%d, %d]\n", flip_count, dir.r, dir.c, t.pos.r, t.pos.c);
   return flip_count;
 }
 
 
 int flip_pieces(Board *b, Turn t, int color) {
-  Vector dirs[] = {{.r=1, .c=0},
-                   {.r=0, .c=1},
-                   {.r=1, .c=1},
-                   {.r=1, .c=-1}};
+  Vector dirs[] = {{.r=1, .c=0},   //Down
+                   {.r=0, .c=1},   //Right
+                   {.r=1, .c=1},   //DownRight
+                   {.r=1, .c=-1}}; //DownLeft
   int flip_count = 0;
-  for (int i = 0; i < 3; ++i) {
+  for (int i = 0; i < 4; ++i) {
     flip_count += flip_pieces_by_direction(b, t, color, dirs[i]);
     flip_count += flip_pieces_by_direction(b, t, color, Vector_scale(dirs[i], -1));
   }

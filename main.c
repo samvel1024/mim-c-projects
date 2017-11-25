@@ -38,13 +38,15 @@
 /**
  * Define strategy per player, to be able to change for debugging
  */
-#define BLACK_PLAYER_STRATEGY make_turn_player
+#define BLACK_PLAYER_STRATEGY make_turn_ai
 #define WHITE_PLAYER_STRATEGY make_turn_player
 
 #define SIZE 8
+#define WHITE (-1)
 #define FREE  0
 #define BLACK 1
-#define WHITE (-1)
+
+const char VIEW_MAP[] = {WHITE_VIEW, FREE_VIEW, BLACK_VIEW};
 
 /**
  * Definition of Game board and related procedures
@@ -61,8 +63,9 @@ Board *Board_new() {
       *b[i][j] = FREE;
     }
   }
-  *b[3][3] = *b[4][4] = WHITE;
-  *b[4][3] = *b[3][4] = BLACK;
+  int mid = SIZE / 2;
+  *b[mid - 1][mid - 1] = *b[mid][mid] = WHITE;
+  *b[mid][mid - 1] = *b[mid - 1][mid] = BLACK;
   return b;
 }
 
@@ -70,16 +73,7 @@ Board *Board_new() {
  * @return the character used to represent the cell at (r, c) in the view
  */
 char Board_map_to_view(Board *b, int r, int c) {
-  switch (*b[r][c]) {
-    case WHITE:
-      return WHITE_VIEW;
-    case BLACK:
-      return BLACK_VIEW;
-    case FREE:
-      return FREE_VIEW;
-    default:
-      exit(1);
-  }
+  return VIEW_MAP[*b[r][c] + 1];
 }
 
 /**
@@ -163,11 +157,11 @@ typedef struct turn_t {
  * @param b the game board
  * @param start the proposed position of the turn
  * @param color the color of the player
- * @param callback a function that is called by the procedure if it finds a piece that is a candidate for being flipped if the turn is performed
+ * @param callback a function that is called by the procedure if it finds a piece that is a candidate for being flipped
  * @return the number of flips that will happen after the turn
  */
-int Reversi_count_pieces(Board *b, Vector start, int color,
-                         void (*callback)(Board *b, int searched_color, Vector pos));
+int Reversi_count_flips(Board *b, Vector start, int color,
+                        void (*callback)(Board *b, int searched_color, Vector pos));
 
 /**
  * Empty procedure that is passed to Reversi_conut_pieces by the
@@ -185,10 +179,24 @@ void do_nothing(Board *b, int color, Vector pos) {
 Turn make_turn_ai(Board *b, int color) {
   UNUSED(b);
   UNUSED(color);
-  Vector v = {.r = 1, .c = 2};
-  Reversi_count_pieces(b, v, color, do_nothing);
-  Turn t = {.pass = true};
-  return t;
+  int max_flips = 0;
+  Turn turn = {.pass = true};
+  for (int r = 0; r < SIZE; ++r) {
+    for (int c = 0; c < SIZE; ++c) {
+      if (*b[r][c] != FREE)
+        continue;
+      Vector pos = {.c = c, .r = r};
+      int flips = Reversi_count_flips(b, pos, color, do_nothing);
+      if (max_flips <= flips) {
+        max_flips = flips;
+        turn.pos = pos;
+      }
+    }
+  }
+  if (max_flips > 0)
+    turn.pass = false;
+  log("Playing turn [%d, %d, pass=%d] by AI player\n", turn.pos.r, turn.pos.c, turn.pass);
+  return turn;
 }
 
 /**
@@ -224,6 +232,7 @@ Turn make_turn_player(Board *b, int color) {
 
 //Initialization of strategies for white and black players
 Turn (*make_turn_black)(Board *b, int color) = BLACK_PLAYER_STRATEGY;
+
 Turn (*make_turn_white)(Board *b, int color) = WHITE_PLAYER_STRATEGY;
 
 /**
@@ -231,8 +240,8 @@ Turn (*make_turn_white)(Board *b, int color) = WHITE_PLAYER_STRATEGY;
  * @param dir the direction vector by which we perform the search
  * @return the number of pieces flipped on single direction
  */
-int Reversi_count_pieces_by_direction(Board *b, Vector start, int color, Vector dir,
-                                      void (*callback)(Board *b, int searched_color, Vector pos)) {
+int Reversi_count_flips_by_direction(Board *b, Vector start, int color, Vector dir,
+                                     void (*callback)(Board *b, int searched_color, Vector pos)) {
   int flip_count = 0;
   Vector last_same_color = start;
   for (Vector pos = start; Vector_is_in_bounds(pos); pos = Vector_add(pos, dir)) {
@@ -246,21 +255,21 @@ int Reversi_count_pieces_by_direction(Board *b, Vector start, int color, Vector 
       (*callback)(b, color, pos);
     }
   }
-  log("Flipped %d pieces in direction [%d, %d] from [%d, %d]\n", flip_count, dir.r, dir.c, start.r, start.c);
+//  log("Counted %d pieces to be flipped in direction [%d, %d] from [%d, %d]\n", flip_count, dir.r, dir.c, start.r, start.c);
   return flip_count;
 }
 
 
-int Reversi_count_pieces(Board *b, Vector start, int color,
-                         void (*callback)(Board *b, int searched_color, Vector pos)) {
+int Reversi_count_flips(Board *b, Vector start, int color,
+                        void (*callback)(Board *b, int searched_color, Vector pos)) {
   Vector dirs[] = {{.r=1, .c=0},   //Down
                    {.r=0, .c=1},   //Right
                    {.r=1, .c=1},   //DownRight
                    {.r=1, .c=-1}}; //DownLeft
   int flip_count = 0;
   for (int i = 0; i < 4; ++i) {
-    flip_count += Reversi_count_pieces_by_direction(b, start, color, dirs[i], callback);
-    flip_count += Reversi_count_pieces_by_direction(b, start, color, Vector_scale(dirs[i], -1), callback);
+    flip_count += Reversi_count_flips_by_direction(b, start, color, dirs[i], callback);
+    flip_count += Reversi_count_flips_by_direction(b, start, color, Vector_scale(dirs[i], -1), callback);
   }
   return flip_count;
 }
@@ -282,7 +291,7 @@ void Reversi_start() {
     log("\n%s %s\n", (curr_player_color == WHITE) ? "White" : "Black", "player's turn");
     Turn t = (curr_player_color == WHITE) ? (*make_turn_white)(board, WHITE) : (*make_turn_black)(board, BLACK);
     if (!t.pass) {
-      int flip_count = Reversi_count_pieces(board, t.pos, curr_player_color, Reversi_flip_piece);
+      int flip_count = Reversi_count_flips(board, t.pos, curr_player_color, Reversi_flip_piece);
       if (flip_count == 0) {
         log("No flipped piece, error");
         exit(1);

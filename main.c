@@ -235,11 +235,16 @@ Turn (*make_turn_white)(Board *b, int color) = WHITE_PLAYER_STRATEGY;
 int Reversi_traverse_flips_by_direction(Board *b, Vector start, int color, Vector dir,
                                         void (*on_found)(Board *b, int searched_color, Vector pos)) {
   int flip_count = 0;
-  Vector last_same_color = start;
-  for (Vector pos = start; Vector_is_in_bounds(pos); pos = Vector_add(pos, dir))
-    last_same_color = *b[pos.r][pos.c] == color ? pos : last_same_color;
+  Vector first_same_color = start;
+  for (Vector pos = Vector_add(start, dir);
+       Vector_is_in_bounds(pos) && Vector_equals(first_same_color, start);
+       pos = Vector_add(pos, dir)) {
+    if (*b[pos.r][pos.c] == color) {
+      first_same_color = pos;
+    }
+  }
 
-  for (Vector pos = start; !Vector_equals(pos, last_same_color); pos = Vector_add(pos, dir)) {
+  for (Vector pos = start; !Vector_equals(pos, first_same_color); pos = Vector_add(pos, dir)) {
     if (*b[pos.r][pos.c] == -color) {
       ++flip_count;
       (*on_found)(b, color, pos);
@@ -318,10 +323,13 @@ void Reversi_start() {
     Turn t = (curr_player_color == WHITE) ? (*make_turn_white)(board, WHITE) : (*make_turn_black)(board, BLACK);
     int turn_err = t.err_status;
     if (!t.pass && !turn_err) {
+
       bool has_neigh = Board_has_neighbouring_piece(board, t.pos.r, t.pos.c);
       int flip_count = has_neigh ? Reversi_traverse_flips(board, t.pos, curr_player_color, Reversi_flip_piece) : 0;
+
       (*(curr_player_color == WHITE ? &white_score : &black_score)) += flip_count;
       (*(curr_player_color == WHITE ? &black_score : &white_score)) -= flip_count;
+
       if (flip_count == 0)
         turn_err = TURN_ERR_INVALID;
       else {
@@ -329,8 +337,9 @@ void Reversi_start() {
         ++(*(curr_player_color == WHITE ? &white_score : &black_score));
       }
     }
-//
-//    game_over = !Reversi_has_valid_turns(board, WHITE) && !Reversi_has_valid_turns(board, BLACK);
+    //Two possible determination strategies for game over, not mentioned exactly in problem description
+    //game_over = (white_score + black_score) == SIZE * SIZE;
+    //game_over = !Reversi_has_valid_turns(board, WHITE) && !Reversi_has_valid_turns(board, BLACK);
     switch (turn_err) {
       case TURN_ERR_TERMINATE:
         game_over = true;

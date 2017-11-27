@@ -48,6 +48,50 @@
 
 const char VIEW_MAP[] = {WHITE_VIEW, FREE_VIEW, BLACK_VIEW};
 
+
+/**
+ * Vector representing a (row, column) tuple in the board
+ */
+typedef struct vec_t {
+  int r;
+  int c;
+} Vector;
+
+/**
+ * @return Vector c that equals to the vector sum a + b
+ */
+Vector Vector_add(Vector a, Vector b) {
+  Vector c = {
+    .c = a.c + b.c,
+    .r = a.r + b.r
+  };
+  return c;
+}
+
+/**
+ * @return if the vector points to a cell inside of game board
+ */
+bool Vector_is_in_bounds(Vector v) {
+  return 0 <= v.c && v.c < SIZE && 0 <= v.r && v.r < SIZE;
+}
+
+/**
+ * @return true if two vectors are pointing to the same cell
+ */
+bool Vector_equals(Vector a, Vector b) {
+  return a.r == b.r && a.c == b.c;
+}
+
+
+const Vector DIRECTIONS[] = {{.r=1, .c=0},   //Down
+                             {.r=-1, .c=0},  //Up
+                             {.r=0, .c=-1},  //Left
+                             {.r=0, .c=1},   //Right
+                             {.r=1, .c=1},   //DownRight
+                             {.r=-1, .c=-1},   //UpLeft
+                             {.r=1, .c=-1}, //DownLeft
+                             {.r=-1, .c=1}}; //UpRight
+
 /**
  * Definition of Game board and related procedures
  */
@@ -93,50 +137,15 @@ void Board_print(Board *b) {
   printf("\n");
 }
 
-/**
- * Vector representing a (row, column) tuple in the board
- */
-typedef struct vec_t {
-  int r;
-  int c;
-} Vector;
-
-/**
- * @return Vector c that equals to the vector sum a + b
- */
-Vector Vector_add(Vector a, Vector b) {
-  Vector c = {
-    .c = a.c + b.c,
-    .r = a.r + b.r
-  };
-  return c;
+bool Board_has_neighbouring_piece(Board *b, int r, int c) {
+  Vector start = {.r = r, .c = c};
+  for (int i = 0; i < (int) (sizeof(DIRECTIONS) / sizeof(Vector)); ++i) {
+    Vector v = Vector_add(start, DIRECTIONS[i]);
+    if (Vector_is_in_bounds(v) && *b[v.r][v.c] != FREE)
+      return true;
+  }
+  return false;
 }
-
-/**
- * @return scaled vector v by a scalar k
- */
-Vector Vector_scale(Vector v, int k) {
-  Vector vec = {
-    .r = k * v.r,
-    .c = k * v.c
-  };
-  return vec;
-}
-
-/**
- * @return if the vector points to a cell inside of game board
- */
-bool Vector_is_in_bounds(Vector v) {
-  return 0 <= v.c && v.c < SIZE && 0 <= v.r && v.r < SIZE;
-}
-
-/**
- * @return true if two vectors are pointing to the same cell
- */
-bool Vector_equals(Vector a, Vector b) {
-  return a.r == b.r && a.c == b.c;
-}
-
 
 /**
  * Represents a turn made by the player, the pass property is going to be true
@@ -161,7 +170,7 @@ typedef struct turn_t {
  * @return the number of flips that will happen after the turn
  */
 int Reversi_count_flips(Board *b, Vector start, int color,
-                        void (*callback)(Board *b, int searched_color, Vector pos));
+                        void (*callback)(Board *board, int searched_color, Vector pos));
 
 /**
  * Empty procedure that is passed to Reversi_conut_pieces by the
@@ -183,7 +192,7 @@ Turn make_turn_ai(Board *b, int color) {
   Turn turn = {.pass = true};
   for (int r = 0; r < SIZE; ++r) {
     for (int c = 0; c < SIZE; ++c) {
-      if (*b[r][c] != FREE)
+      if (*b[r][c] != FREE || !Board_has_neighbouring_piece(b, r, c))
         continue;
       Vector pos = {.c = c, .r = r};
       int flips = Reversi_count_flips(b, pos, color, do_nothing);
@@ -211,7 +220,7 @@ Turn make_turn_player(Board *b, int color) {
   } while (isspace(first));
   log("Reading %c as first input char\n", first);
   if (first == '=') {
-    Turn t = {.pass = true, .pos = {.c = 0, .r = 0}};
+    Turn t = {.pass = true};
     return t;
   }
   scanf("%c", &second);
@@ -255,21 +264,17 @@ int Reversi_count_flips_by_direction(Board *b, Vector start, int color, Vector d
       (*callback)(b, color, pos);
     }
   }
-//  log("Counted %d pieces to be flipped in direction [%d, %d] from [%d, %d]\n", flip_count, dir.r, dir.c, start.r, start.c);
+  log("Counted %d pieces to be flipped in direction [%d, %d] from [%d, %d]\n", flip_count, dir.r, dir.c, start.r,
+      start.c);
   return flip_count;
 }
 
 
 int Reversi_count_flips(Board *b, Vector start, int color,
                         void (*callback)(Board *b, int searched_color, Vector pos)) {
-  Vector dirs[] = {{.r=1, .c=0},   //Down
-                   {.r=0, .c=1},   //Right
-                   {.r=1, .c=1},   //DownRight
-                   {.r=1, .c=-1}}; //DownLeft
   int flip_count = 0;
-  for (int i = 0; i < 4; ++i) {
-    flip_count += Reversi_count_flips_by_direction(b, start, color, dirs[i], callback);
-    flip_count += Reversi_count_flips_by_direction(b, start, color, Vector_scale(dirs[i], -1), callback);
+  for (int i = 0; i < (int) (sizeof(DIRECTIONS) / sizeof(Vector)); ++i) {
+    flip_count += Reversi_count_flips_by_direction(b, start, color, DIRECTIONS[i], callback);
   }
   return flip_count;
 }

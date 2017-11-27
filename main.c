@@ -312,8 +312,10 @@ void Reversi_start() {
       (*(curr_player_color == WHITE ? &black_score : &white_score)) -= flip_count;
       if (flip_count == 0)
         turn_err = TURN_ERR_INVALID;
-      else
+      else {
         *board[t.pos.r][t.pos.c] = curr_player_color;
+        ++(*(curr_player_color == WHITE ? &white_score : &black_score));
+      }
     }
     switch (turn_err) {
       case TURN_ERR_TERMINATE:

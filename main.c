@@ -40,11 +40,11 @@
  */
 #define BLACK_PLAYER_STRATEGY make_turn_ai
 #define WHITE_PLAYER_STRATEGY make_turn_player
-
 #define SIZE 8
 #define WHITE (-1)
 #define FREE  0
 #define BLACK 1
+#define PRINT_BEFORE_TURN BLACK
 
 const char VIEW_MAP[] = {WHITE_VIEW, FREE_VIEW, BLACK_VIEW};
 
@@ -290,9 +290,10 @@ void Reversi_flip_piece(Board *b, int color, Vector pos) {
 void Reversi_start() {
   bool game_over = false;
   Board *board = Board_new();
-  int curr_player_color = WHITE;
+  int curr_player_color = BLACK;
   while (!game_over) {
-    Board_print(board);
+    if (PRINT_BEFORE_TURN == curr_player_color)
+      Board_print(board);
     log("\n%s %s\n", (curr_player_color == WHITE) ? "White" : "Black", "player's turn");
     Turn t = (curr_player_color == WHITE) ? (*make_turn_white)(board, WHITE) : (*make_turn_black)(board, BLACK);
     if (!t.pass) {

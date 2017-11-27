@@ -8,7 +8,7 @@
 #include <ctype.h>
 
 
-#define MODE_DEBUG
+//#define MODE_DEBUG
 
 #ifdef MODE_DEBUG
 #define ENABLE_LOG
@@ -38,8 +38,8 @@
 /**
  * Define strategy per player, to be able to change for debugging
  */
-#define BLACK_PLAYER_STRATEGY make_turn_ai
-#define WHITE_PLAYER_STRATEGY make_turn_player
+#define BLACK_PLAYER_STRATEGY make_turn_player
+#define WHITE_PLAYER_STRATEGY make_turn_ai
 #define SIZE 8
 #define WHITE (-1)
 #define FREE  0
@@ -196,7 +196,7 @@ Turn make_turn_ai(Board *b, int color) {
         continue;
       Vector pos = {.c = c, .r = r};
       int flips = Reversi_count_flips(b, pos, color, do_nothing);
-      if (max_flips <= flips) {
+      if (max_flips < flips) {
         max_flips = flips;
         turn.pos = pos;
       }
@@ -291,13 +291,21 @@ void Reversi_start() {
   bool game_over = false;
   Board *board = Board_new();
   int curr_player_color = BLACK;
+  int white_score = 2;
+  int black_score = 2;
   while (!game_over) {
     if (PRINT_BEFORE_TURN == curr_player_color)
       Board_print(board);
     log("\n%s %s\n", (curr_player_color == WHITE) ? "White" : "Black", "player's turn");
     Turn t = (curr_player_color == WHITE) ? (*make_turn_white)(board, WHITE) : (*make_turn_black)(board, BLACK);
+    printf("%c%c ", t.pos.c + 'a', t.pos.r + '1');
     if (!t.pass) {
       int flip_count = Reversi_count_flips(board, t.pos, curr_player_color, Reversi_flip_piece);
+      (*(curr_player_color == WHITE ? &white_score : &black_score)) += flip_count;
+      (*(curr_player_color == WHITE ? &black_score : &white_score)) -= flip_count;
+      if (PRINT_BEFORE_TURN == -curr_player_color){
+        printf("%d\n", black_score - white_score);
+      }
       if (flip_count == 0) {
         log("No flipped piece, error");
         exit(1);

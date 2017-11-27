@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <ctype.h>
 
 
 //#define MODE_DEBUG
@@ -44,7 +43,10 @@
 #define WHITE (-1)
 #define FREE  0
 #define BLACK 1
-#define PRINT_BEFORE_TURN BLACK
+#define PRINT_ON_PLAYER BLACK
+#define TURN_NO_ERR 0
+#define TURN_ERR_TERMINATE 1
+#define TURN_ERR_INVALID 2
 
 const char VIEW_MAP[] = {WHITE_VIEW, FREE_VIEW, BLACK_VIEW};
 
@@ -88,8 +90,8 @@ const Vector DIRECTIONS[] = {{.r=1, .c=0},   //Down
                              {.r=0, .c=-1},  //Left
                              {.r=0, .c=1},   //Right
                              {.r=1, .c=1},   //DownRight
-                             {.r=-1, .c=-1},   //UpLeft
-                             {.r=1, .c=-1}, //DownLeft
+                             {.r=-1, .c=-1}, //UpLeft
+                             {.r=1, .c=-1},  //DownLeft
                              {.r=-1, .c=1}}; //UpRight
 
 /**
@@ -155,6 +157,7 @@ bool Board_has_neighbouring_piece(Board *b, int r, int c) {
 typedef struct turn_t {
   Vector pos;
   bool pass;
+  int err_status;
 } Turn;
 
 
@@ -214,29 +217,32 @@ Turn make_turn_ai(Board *b, int color) {
 Turn make_turn_player(Board *b, int color) {
   UNUSED(b);
   UNUSED(color);
-  char first, second;
-  do {
-    scanf("%c", &first);
-  } while (isspace(first));
-  log("Reading %c as first input char\n", first);
-  if (first == '=') {
-    Turn t = {.pass = true};
+  int first = getchar();
+  if (first == EOF){
+    Turn t = {.err_status = TURN_ERR_TERMINATE};
     return t;
   }
-  scanf("%c", &second);
-  log("Reading %c as second input char\n", second);
-  Turn t = {
-    .pass = false,
-    .pos = {
-      .r = second - '1',
-      .c = first - 'a'
-    }
-  };
-  if (!Vector_is_in_bounds(t.pos)) {
-    log("Entered position is out of bounds\n");
-    exit(1);
+  int second = getchar();
+  if (first == '=' && second == '\n') {
+    Turn t = {.pass = true, .err_status=TURN_NO_ERR};
+    return t;
+  } else if ('a' <= first && first <= 'h' && '1' <= second && second <= '8' && getchar() == '\n') {
+    Turn t = {
+      .pass = false,
+      .pos = {
+        .r = second - '1',
+        .c = first - 'a'
+      },
+      .err_status = TURN_NO_ERR
+    };
+    return t;
+  } else {
+    while (getchar() != '\n');
+    Turn t = {
+      .err_status = TURN_ERR_INVALID
+    };
+    return t;
   }
-  return t;
 }
 
 //Initialization of strategies for white and black players
@@ -294,25 +300,37 @@ void Reversi_start() {
   int white_score = 2;
   int black_score = 2;
   while (!game_over) {
-    if (PRINT_BEFORE_TURN == curr_player_color)
+    if (PRINT_ON_PLAYER == curr_player_color)
       Board_print(board);
     log("\n%s %s\n", (curr_player_color == WHITE) ? "White" : "Black", "player's turn");
     Turn t = (curr_player_color == WHITE) ? (*make_turn_white)(board, WHITE) : (*make_turn_black)(board, BLACK);
-    printf("%c%c ", t.pos.c + 'a', t.pos.r + '1');
-    if (!t.pass) {
-      int flip_count = Reversi_count_flips(board, t.pos, curr_player_color, Reversi_flip_piece);
+    int turn_err = t.err_status;
+    if (!t.pass && !turn_err) {
+      bool has_neigh = Board_has_neighbouring_piece(board, t.pos.r, t.pos.c);
+      int flip_count = has_neigh ? Reversi_count_flips(board, t.pos, curr_player_color, Reversi_flip_piece) : 0;
       (*(curr_player_color == WHITE ? &white_score : &black_score)) += flip_count;
       (*(curr_player_color == WHITE ? &black_score : &white_score)) -= flip_count;
-      if (PRINT_BEFORE_TURN == -curr_player_color){
-        printf("%d\n", black_score - white_score);
-      }
-      if (flip_count == 0) {
-        log("No flipped piece, error");
-        exit(1);
-      }
-      *board[t.pos.r][t.pos.c] = curr_player_color;
+      if (flip_count == 0)
+        turn_err = TURN_ERR_INVALID;
+      else
+        *board[t.pos.r][t.pos.c] = curr_player_color;
     }
-    curr_player_color *= -1;
+    switch (turn_err) {
+      case TURN_ERR_TERMINATE:
+        game_over = true;
+        break;
+      case TURN_ERR_INVALID:
+        printf("? ");
+        break;
+      case TURN_NO_ERR:
+        if (t.pass) printf("= ");
+        else printf("%c%c ", t.pos.c + 'a', t.pos.r + '1');
+        curr_player_color *= -1;
+        break;
+    }
+    if ((turn_err == TURN_NO_ERR || turn_err == TURN_ERR_INVALID) && PRINT_ON_PLAYER == curr_player_color) {
+      printf("%d\n", black_score - white_score);
+    }
   }
   free(board);
 }

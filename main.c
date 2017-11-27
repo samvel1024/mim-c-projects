@@ -7,8 +7,6 @@
 #include <stdbool.h>
 
 
-//#define MODE_DEBUG
-
 #ifdef MODE_DEBUG
 #define ENABLE_LOG
 #define FREE_VIEW '-'
@@ -162,35 +160,15 @@ typedef struct turn_t {
 
 
 /**
- * Definition of a procedure that ai player depends on.
- * This procedure by itself does not perform any state mutation on the board,
- * instead it takes a callback which can be used to flip the piece if needed
- *
- * @param b the game board
- * @param start the proposed position of the turn
- * @param color the color of the player
- * @param callback a function that is called by the procedure if it finds a piece that is a candidate for being flipped
- * @return the number of flips that will happen after the turn
+ * Count number of flips
  */
-int Reversi_count_flips(Board *b, Vector start, int color,
-                        void (*callback)(Board *board, int searched_color, Vector pos));
+int Reversi_count_flips(Board *b, Vector start, int color);
 
-/**
- * Empty procedure that is passed to Reversi_conut_pieces by the
- * ai player when searching for the optimal turn
- */
-void do_nothing(Board *b, int color, Vector pos) {
-  UNUSED(b);
-  UNUSED(color);
-  UNUSED(pos);
-}
 
 /**
  * Implementation of computer player
  */
 Turn make_turn_ai(Board *b, int color) {
-  UNUSED(b);
-  UNUSED(color);
   int max_flips = 0;
   Turn turn = {.pass = true};
   for (int r = 0; r < SIZE; ++r) {
@@ -198,7 +176,7 @@ Turn make_turn_ai(Board *b, int color) {
       if (*b[r][c] != FREE || !Board_has_neighbouring_piece(b, r, c))
         continue;
       Vector pos = {.c = c, .r = r};
-      int flips = Reversi_count_flips(b, pos, color, do_nothing);
+      int flips = Reversi_count_flips(b, pos, color);
       if (max_flips < flips) {
         max_flips = flips;
         turn.pos = pos;
@@ -212,13 +190,13 @@ Turn make_turn_ai(Board *b, int color) {
 }
 
 /**
- * Implementation of player through std input
+ * Implementation of player through stdin
  */
 Turn make_turn_player(Board *b, int color) {
   UNUSED(b);
   UNUSED(color);
   int first = getchar();
-  if (first == EOF){
+  if (first == EOF) {
     Turn t = {.err_status = TURN_ERR_TERMINATE};
     return t;
   }
@@ -251,23 +229,20 @@ Turn (*make_turn_black)(Board *b, int color) = BLACK_PLAYER_STRATEGY;
 Turn (*make_turn_white)(Board *b, int color) = WHITE_PLAYER_STRATEGY;
 
 /**
- *
  * @param dir the direction vector by which we perform the search
  * @return the number of pieces flipped on single direction
  */
-int Reversi_count_flips_by_direction(Board *b, Vector start, int color, Vector dir,
-                                     void (*callback)(Board *b, int searched_color, Vector pos)) {
+int Reversi_traverse_flips_by_direction(Board *b, Vector start, int color, Vector dir,
+                                        void (*on_found)(Board *b, int searched_color, Vector pos)) {
   int flip_count = 0;
   Vector last_same_color = start;
-  for (Vector pos = start; Vector_is_in_bounds(pos); pos = Vector_add(pos, dir)) {
-    if (*b[pos.r][pos.c] == color) {
-      last_same_color = pos;
-    }
-  }
+  for (Vector pos = start; Vector_is_in_bounds(pos); pos = Vector_add(pos, dir))
+    last_same_color = *b[pos.r][pos.c] == color ? pos : last_same_color;
+
   for (Vector pos = start; !Vector_equals(pos, last_same_color); pos = Vector_add(pos, dir)) {
     if (*b[pos.r][pos.c] == -color) {
       ++flip_count;
-      (*callback)(b, color, pos);
+      (*on_found)(b, color, pos);
     }
   }
   log("Counted %d pieces to be flipped in direction [%d, %d] from [%d, %d]\n", flip_count, dir.r, dir.c, start.r,
@@ -275,23 +250,60 @@ int Reversi_count_flips_by_direction(Board *b, Vector start, int color, Vector d
   return flip_count;
 }
 
-
-int Reversi_count_flips(Board *b, Vector start, int color,
-                        void (*callback)(Board *b, int searched_color, Vector pos)) {
+/**
+ * @param b the board
+ * @param start position of the piece
+ * @param color the color of the new piece
+ * @param on_found callback which is called on every matched piece
+ * @return
+ */
+int Reversi_traverse_flips(Board *b, Vector start, int color,
+                           void (*on_found)(Board *b, int searched_color, Vector pos)) {
   int flip_count = 0;
   for (int i = 0; i < (int) (sizeof(DIRECTIONS) / sizeof(Vector)); ++i) {
-    flip_count += Reversi_count_flips_by_direction(b, start, color, DIRECTIONS[i], callback);
+    flip_count += Reversi_traverse_flips_by_direction(b, start, color, DIRECTIONS[i], on_found);
   }
   return flip_count;
 }
 
+
 /**
- *
+ * Callback empty function that is passed to only count flips
+ */
+void do_nothing(Board *b, int color, Vector pos) {
+  UNUSED(b);
+  UNUSED(color);
+  UNUSED(pos);
+}
+
+/**
+ * Callback function that is passed to flip the pieces
  */
 void Reversi_flip_piece(Board *b, int color, Vector pos) {
   *b[pos.r][pos.c] = color;
 }
 
+int Reversi_count_flips(Board *b, Vector start, int color) {
+  return Reversi_traverse_flips(b, start, color, do_nothing);
+}
+
+/**
+ * Count the number of valid turns left by specified color
+ */
+bool Reversi_has_valid_turns(Board *b, bool color) {
+  for (int r = 0; r < SIZE; ++r) {
+    for (int c = 0; c < SIZE; ++c) {
+      if (*b[r][c] != FREE || !Board_has_neighbouring_piece(b, r, c))
+        continue;
+      Vector pos = {.c = c, .r = r};
+      int flips = Reversi_count_flips(b, pos, color);
+      if (flips > 0) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
 
 void Reversi_start() {
   bool game_over = false;
@@ -307,7 +319,7 @@ void Reversi_start() {
     int turn_err = t.err_status;
     if (!t.pass && !turn_err) {
       bool has_neigh = Board_has_neighbouring_piece(board, t.pos.r, t.pos.c);
-      int flip_count = has_neigh ? Reversi_count_flips(board, t.pos, curr_player_color, Reversi_flip_piece) : 0;
+      int flip_count = has_neigh ? Reversi_traverse_flips(board, t.pos, curr_player_color, Reversi_flip_piece) : 0;
       (*(curr_player_color == WHITE ? &white_score : &black_score)) += flip_count;
       (*(curr_player_color == WHITE ? &black_score : &white_score)) -= flip_count;
       if (flip_count == 0)
@@ -317,6 +329,8 @@ void Reversi_start() {
         ++(*(curr_player_color == WHITE ? &white_score : &black_score));
       }
     }
+//
+//    game_over = !Reversi_has_valid_turns(board, WHITE) && !Reversi_has_valid_turns(board, BLACK);
     switch (turn_err) {
       case TURN_ERR_TERMINATE:
         game_over = true;
@@ -329,6 +343,8 @@ void Reversi_start() {
         else printf("%c%c ", t.pos.c + 'a', t.pos.r + '1');
         curr_player_color *= -1;
         break;
+      default:
+        exit(1);
     }
     if ((turn_err == TURN_NO_ERR || turn_err == TURN_ERR_INVALID) && PRINT_ON_PLAYER == curr_player_color) {
       printf("%d\n", black_score - white_score);

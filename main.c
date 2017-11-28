@@ -200,6 +200,10 @@ Turn make_turn_player(Board *b, int color) {
     Turn t = {.err_status = TURN_ERR_TERMINATE};
     return t;
   }
+  if (first == '\n') {
+    Turn t = {.err_status = TURN_ERR_INVALID};
+    return t;
+  }
   int second = getchar();
   if (first == '=' && second == '\n') {
     Turn t = {.pass = true, .err_status=TURN_NO_ERR};

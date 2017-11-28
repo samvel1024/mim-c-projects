@@ -239,19 +239,15 @@ Turn (*make_turn_white)(Board *b, int color) = WHITE_PLAYER_STRATEGY;
 int Reversi_traverse_flips_by_direction(Board *b, Vector start, int color, Vector dir,
                                         void (*on_found)(Board *b, int searched_color, Vector pos)) {
   int flip_count = 0;
-  Vector first_same_color = start;
-  for (Vector pos = Vector_add(start, dir);
-       Vector_is_in_bounds(pos) && Vector_equals(first_same_color, start);
-       pos = Vector_add(pos, dir)) {
-    if (*b[pos.r][pos.c] == color) {
-      first_same_color = pos;
-    }
-  }
+  Vector same = Vector_add(start, dir);
+  while (Vector_is_in_bounds(same) && *b[same.r][same.c] == -color)
+    same = Vector_add(same, dir);
 
-  for (Vector pos = start; !Vector_equals(pos, first_same_color); pos = Vector_add(pos, dir)) {
-    if (*b[pos.r][pos.c] == -color) {
+  if (Vector_is_in_bounds(same) && *b[same.r][same.c] == color) {
+    for (Vector pos = Vector_add(start, dir); !Vector_equals(pos, same); pos = Vector_add(pos, dir)) {
       ++flip_count;
       (*on_found)(b, color, pos);
+
     }
   }
   log("Counted %d pieces to be flipped in direction [%d, %d] from [%d, %d]\n", flip_count, dir.r, dir.c, start.r,

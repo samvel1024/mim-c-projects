@@ -1,0 +1,309 @@
+--------1
+--------2
+--------3
+---BC---4
+---CB---5
+--------6
+--------7
+--------8
+abcdefgh
+e6 f4 0
+--------1
+--------2
+--------3
+---BBB--4
+---CC---5
+----C---6
+--------7
+--------8
+abcdefgh
+e3 d6 -2
+--------1
+--------2
+----C---3
+---BCB--4
+---BB---5
+---BC---6
+--------7
+--------8
+abcdefgh
+c6 e2 -2
+--------1
+----B---2
+----B---3
+---BBB--4
+---CB---5
+--CCC---6
+--------7
+--------8
+abcdefgh
+d3 c3 -4
+--------1
+----B---2
+--BBB---3
+---BBB--4
+---CB---5
+--CCC---6
+--------7
+--------8
+abcdefgh
+f3 d7 -6
+--------1
+----B---2
+--BBBC--3
+---BCB--4
+---BB---5
+--CBC---6
+---B----7
+--------8
+abcdefgh
+f5 g4 -14
+--------1
+----B---2
+--BBBB--3
+---BBBB-4
+---BBB--5
+--CBB---6
+---B----7
+--------8
+abcdefgh
+f6 f7 -14
+--------1
+----B---2
+--BBBB--3
+---BBBB-4
+---BBB--5
+--CCBB--6
+---B-B--7
+--------8
+abcdefgh
+g6 b5 -12
+--------1
+----B---2
+--BBBB--3
+---BBBB-4
+-B-BBB--5
+--BCCCC-6
+---B-B--7
+--------8
+abcdefgh
+e1 h6 -12
+----C---1
+----C---2
+--BBCB--3
+---BCBB-4
+-B-BCB--5
+--BBBBBB6
+---B-B--7
+--------8
+abcdefgh
+e7 d1 -12
+---BC---1
+----B---2
+--BBCB--3
+---BCBB-4
+-B-BCB--5
+--BBCBBB6
+---BCB--7
+--------8
+abcdefgh
+g2 e8 -20
+---BC---1
+----B-C-2
+--BBBC--3
+---BBBB-4
+-B-BBB--5
+--BBBBBB6
+---BBB--7
+----B---8
+abcdefgh
+b7 f1 -16
+---BBB--1
+----B-C-2
+--BBBC--3
+---BCBB-4
+-B-CBB--5
+--CBBBBB6
+-C-BBB--7
+----B---8
+abcdefgh
+b3 c2 -14
+---BBB--1
+--B-B-C-2
+-CCBCC--3
+---BBBB-4
+-B-CBB--5
+--CBBBBB6
+-C-BBB--7
+----B---8
+abcdefgh
+g5 f2 -16
+---BBB--1
+--B-BBC-2
+-CCBBB--3
+---BBBB-4
+-B-CCBC-5
+--CBBBBB6
+-C-BBB--7
+----B---8
+abcdefgh
+d2 c4 -14
+---BBB--1
+--BCBCC-2
+-CBBCB--3
+--BBBCB-4
+-B-BCBC-5
+--CBBBBB6
+-C-BBB--7
+----B---8
+abcdefgh
+g3 g1 -22
+---BBBB-1
+--BCBBB-2
+-CBBBCB-3
+--BBBCB-4
+-B-BCBB-5
+--CBBBBB6
+-C-BBB--7
+----B---8
+abcdefgh
+h3 h2 -26
+---BBBB-1
+--BCBBBB2
+-CBBBCBC3
+--BBBBB-4
+-B-BBBB-5
+--CBBBBB6
+-C-BBB--7
+----B---8
+abcdefgh
+h1 a8 -26
+---BBBBC1
+--BCBBCC2
+-CBBBCBC3
+--BBBBB-4
+-B-BBBB-5
+--BBBBBB6
+-B-BBB--7
+B---B---8
+abcdefgh
+c1 a2 -20
+--CCCCCC1
+B-BCBBCC2
+-BBBBCBC3
+--BBBBB-4
+-B-BBBB-5
+--BBBBBB6
+-B-BBB--7
+B---B---8
+abcdefgh
+c5 b2 -16
+--CCCCCC1
+BBBBBCCC2
+-BBBCCBC3
+--CBBBB-4
+-BCBBBB-5
+--BBBBBB6
+-B-BBB--7
+B---B---8
+abcdefgh
+h5 h4 -12
+--CCCCCC1
+BBBBBCCC2
+-BBBCCBC3
+--CBBBBB4
+-BCCCCBB5
+--BBBBBB6
+-B-BBB--7
+B---B---8
+abcdefgh
+h7 b4 -8
+--CCCCCC1
+BBBBBCCC2
+-BBBCCBC3
+-BBBBBBC4
+-BBCCCBC5
+--BBBBCC6
+-B-BBB-C7
+B---B---8
+abcdefgh
+b6 c7 -4
+--CCCCCC1
+BBBBBCCC2
+-BBBCCBC3
+-BBCBBBC4
+-BBCBCBC5
+-CBBCCCC6
+-BBBBB-C7
+B---B---8
+abcdefgh
+b8 g7 0
+--CCCCCC1
+BBBBBCCC2
+-BBBCCCC3
+-BBBBCBC4
+-BBCBCBC5
+-CBCCBBC6
+-CCBBBBC7
+BC--B---8
+abcdefgh
+b1 a7 8
+-CCCCCCC1
+BCCBBCCC2
+-CBCCCCC3
+-CBBCCBC4
+-CBCBCBC5
+-BBCCBBC6
+BBBBBBBC7
+BC--B---8
+abcdefgh
+f8 g8 6
+-CCCCCCC1
+BCCBBCCC2
+-CBCCCCC3
+-CBBCCBC4
+-CBBBCBC5
+-BBCBCBC6
+BBBBCBBC7
+BC--BBB-8
+abcdefgh
+d8 c8 2
+-CCCCCCC1
+BCCBBCCC2
+-CBCCCCC3
+-CBBCCBC4
+-CBBBCBC5
+-BBCBCBC6
+BBBBCBBC7
+BBBBBBB-8
+abcdefgh
+h8 a3 0
+-CCCCCCC1
+BCCBBCCC2
+BBBCCCCC3
+-BBBCCBC4
+-CBBBCBC5
+-BBCBCBC6
+BBBBCBCC7
+BBBBBBBC8
+abcdefgh
+a6 a5 -2
+-CCCCCCC1
+BCCBBCCC2
+BBBCCCCC3
+-BBBCCBC4
+BBBBBCBC5
+BBCCBCBC6
+BBBBCBCC7
+BBBBBBBC8
+abcdefgh
+a4 a1 6
+BCCCCCCC1
+BBCBBCCC2
+BCBCCCCC3
+CCCCCCBC4
+BCBBBCBC5
+BBCCBCBC6
+BBBBCBCC7
+BBBBBBBC8
+abcdefgh

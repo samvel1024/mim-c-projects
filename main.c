@@ -239,15 +239,13 @@ Turn (*make_turn_white)(Board *b, int color) = WHITE_PLAYER_STRATEGY;
 int Reversi_traverse_flips_by_direction(Board *b, Vector start, int color, Vector dir,
                                         void (*on_found)(Board *b, int searched_color, Vector pos)) {
   int flip_count = 0;
-  Vector same = Vector_add(start, dir);
-  while (Vector_is_in_bounds(same) && *b[same.r][same.c] == -color)
-    same = Vector_add(same, dir);
-
-  if (Vector_is_in_bounds(same) && *b[same.r][same.c] == color) {
-    for (Vector pos = Vector_add(start, dir); !Vector_equals(pos, same); pos = Vector_add(pos, dir)) {
+  Vector first = Vector_add(start, dir);
+  for (; Vector_is_in_bounds(first) && *b[first.r][first.c] == -color;
+         first = Vector_add(first, dir));
+  if (Vector_is_in_bounds(first) && *b[first.r][first.c] == color) {
+    for (Vector pos = Vector_add(start, dir); !Vector_equals(pos, first); pos = Vector_add(pos, dir)) {
       ++flip_count;
       (*on_found)(b, color, pos);
-
     }
   }
   log("Counted %d pieces to be flipped in direction [%d, %d] from [%d, %d]\n", flip_count, dir.r, dir.c, start.r,
@@ -325,7 +323,8 @@ void Reversi_start() {
     if (!t.pass && !turn_err) {
 
       bool has_neigh = Board_has_neighbouring_piece(board, t.pos.r, t.pos.c);
-      int flip_count = has_neigh ? Reversi_traverse_flips(board, t.pos, curr_player_color, Reversi_flip_piece) : 0;
+      bool is_free = *board[t.pos.r][t.pos.c] == FREE;
+      int flip_count = has_neigh && is_free ? Reversi_traverse_flips(board, t.pos, curr_player_color, Reversi_flip_piece) : 0;
 
       (*(curr_player_color == WHITE ? &white_score : &black_score)) += flip_count;
       (*(curr_player_color == WHITE ? &black_score : &white_score)) -= flip_count;

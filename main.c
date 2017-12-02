@@ -332,7 +332,7 @@ void Reversi_start() {
       if (flip_count == 0)
         turn_err = TURN_ERR_INVALID;
       else {
-        *board[t.pos.r][t.pos.c] = curr_player_color;
+        (*board)[t.pos.r][t.pos.c] = curr_player_color;
         ++(*(curr_player_color == WHITE ? &white_score : &black_score));
       }
     }

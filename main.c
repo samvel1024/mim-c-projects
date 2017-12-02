@@ -104,12 +104,12 @@ Board *Board_new() {
   Board *b = malloc(sizeof(Board));
   for (int i = 0; i < SIZE; ++i) {
     for (int j = 0; j < SIZE; ++j) {
-      *b[i][j] = FREE;
+      (*b)[i][j] = FREE;
     }
   }
   int mid = SIZE / 2;
-  *b[mid - 1][mid - 1] = *b[mid][mid] = WHITE;
-  *b[mid][mid - 1] = *b[mid - 1][mid] = BLACK;
+  (*b)[mid - 1][mid - 1] = (*b)[mid][mid] = WHITE;
+  (*b)[mid][mid - 1] = (*b)[mid - 1][mid] = BLACK;
   return b;
 }
 
@@ -117,7 +117,7 @@ Board *Board_new() {
  * @return the character used to represent the cell at (r, c) in the view
  */
 char Board_map_to_view(Board *b, int r, int c) {
-  return VIEW_MAP[*b[r][c] + 1];
+  return VIEW_MAP[(*b)[r][c] + 1];
 }
 
 /**
@@ -141,7 +141,7 @@ bool Board_has_neighbouring_piece(Board *b, int r, int c) {
   Vector start = {.r = r, .c = c};
   for (int i = 0; i < (int) (sizeof(DIRECTIONS) / sizeof(Vector)); ++i) {
     Vector v = Vector_add(start, DIRECTIONS[i]);
-    if (Vector_is_in_bounds(v) && *b[v.r][v.c] != FREE)
+    if (Vector_is_in_bounds(v) && (*b)[v.r][v.c] != FREE)
       return true;
   }
   return false;
@@ -173,7 +173,7 @@ Turn make_turn_ai(Board *b, int color) {
   Turn turn = {.pass = true};
   for (int r = 0; r < SIZE; ++r) {
     for (int c = 0; c < SIZE; ++c) {
-      if (*b[r][c] != FREE || !Board_has_neighbouring_piece(b, r, c))
+      if ((*b)[r][c] != FREE || !Board_has_neighbouring_piece(b, r, c))
         continue;
       Vector pos = {.c = c, .r = r};
       int flips = Reversi_count_flips(b, pos, color);
@@ -240,9 +240,9 @@ int Reversi_traverse_flips_by_direction(Board *b, Vector start, int color, Vecto
                                         void (*on_found)(Board *b, int searched_color, Vector pos)) {
   int flip_count = 0;
   Vector first = Vector_add(start, dir);
-  for (; Vector_is_in_bounds(first) && *b[first.r][first.c] == -color;
+  for (; Vector_is_in_bounds(first) && (*b)[first.r][first.c] == -color;
          first = Vector_add(first, dir));
-  if (Vector_is_in_bounds(first) && *b[first.r][first.c] == color) {
+  if (Vector_is_in_bounds(first) && (*b)[first.r][first.c] == color) {
     for (Vector pos = Vector_add(start, dir); !Vector_equals(pos, first); pos = Vector_add(pos, dir)) {
       ++flip_count;
       (*on_found)(b, color, pos);
@@ -283,7 +283,7 @@ void do_nothing(Board *b, int color, Vector pos) {
  * Callback function that is passed to flip the pieces
  */
 void Reversi_flip_piece(Board *b, int color, Vector pos) {
-  *b[pos.r][pos.c] = color;
+  (*b)[pos.r][pos.c] = color;
 }
 
 int Reversi_count_flips(Board *b, Vector start, int color) {
@@ -296,7 +296,7 @@ int Reversi_count_flips(Board *b, Vector start, int color) {
 bool Reversi_has_valid_turns(Board *b, bool color) {
   for (int r = 0; r < SIZE; ++r) {
     for (int c = 0; c < SIZE; ++c) {
-      if (*b[r][c] != FREE || !Board_has_neighbouring_piece(b, r, c))
+      if ((*b)[r][c] != FREE || !Board_has_neighbouring_piece(b, r, c))
         continue;
       Vector pos = {.c = c, .r = r};
       int flips = Reversi_count_flips(b, pos, color);

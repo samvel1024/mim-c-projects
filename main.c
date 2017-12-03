@@ -101,7 +101,9 @@ typedef int Board[SIZE][SIZE];
  * @return newly created board of dimensions SIZE by SIZE and the initial game state
  */
 Board *Board_new() {
-  Board *b = malloc(sizeof(Board));
+  int **mat = malloc(SIZE * sizeof(int*));
+  for(int i = 0; i < SIZE; i++) mat[i] = malloc(SIZE * sizeof(int));
+  Board *b = (Board*) mat;
   for (int i = 0; i < SIZE; ++i) {
     for (int j = 0; j < SIZE; ++j) {
       (*b)[i][j] = FREE;

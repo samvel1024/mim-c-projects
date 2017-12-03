@@ -3,7 +3,6 @@
 int main(){
     int i;
     scanf("%d", &i);
-    printf("Input number is %d", i);
-    printf("\n");
+    printf("%d\n", 2*i);
     return 0;
 }

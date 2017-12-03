@@ -101,9 +101,7 @@ typedef int Board[SIZE][SIZE];
  * @return newly created board of dimensions SIZE by SIZE and the initial game state
  */
 Board *Board_new() {
-  int **mat = malloc(SIZE * sizeof(int*));
-  for(int i = 0; i < SIZE; i++) mat[i] = malloc(SIZE * sizeof(int));
-  Board *b = (Board*) mat;
+  Board *b = malloc(sizeof(Board));
   for (int i = 0; i < SIZE; ++i) {
     for (int j = 0; j < SIZE; ++j) {
       (*b)[i][j] = FREE;
@@ -325,7 +323,7 @@ void Reversi_start() {
     if (!t.pass && !turn_err) {
 
       bool has_neigh = Board_has_neighbouring_piece(board, t.pos.r, t.pos.c);
-      bool is_free = *board[t.pos.r][t.pos.c] == FREE;
+      bool is_free = (*board)[t.pos.r][t.pos.c] == FREE;
       int flip_count = has_neigh && is_free ? Reversi_traverse_flips(board, t.pos, curr_player_color, Reversi_flip_piece) : 0;
 
       (*(curr_player_color == WHITE ? &white_score : &black_score)) += flip_count;

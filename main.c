@@ -57,15 +57,16 @@ Word Word_next_word() {
 }
 
 void Word_log(Word * this) {
-  printf("Word{\n\tword: '%s'\n\tsize: %d\n\tis_last: %d\n}\n", this->word, this->length, this->is_last);
+  log("Word{\n\tword: '%s'\n\tsize: %d\n\tis_last: %d\n}\n", this->word, this->length, this->is_last);
 }
 
 typedef enum {
   WRITE = 100,
   READ,
   SUBTRACT,
+  CALL_LABEL,
+  CONDITION,
   RETURN,
-  END_OF_PROGRAM
 } CommandType;
 
 typedef struct command_t {
@@ -77,8 +78,8 @@ typedef struct command_t {
 } Command;
 
 void Command_log(Command * this) {
-  printf("Command{\n\tlabel: '%s'\n\targ1: '%s'\n\targ2: '%s'\n\ttype: %d\n}\n", this->label, this->arg1, this->arg2,
-         this->type);
+  log("Command{\n\tlabel: '%s'\n\targ1: '%s'\n\targ2: '%s'\n\ttype: %d\n}\n", this->label, this->arg1, this->arg2,
+      this->type);
 }
 
 typedef struct vm_t {
@@ -90,48 +91,69 @@ int to_int(char c[]) {
   return atoi(c);
 }
 
-bool is_int(char c[]) {
-  int len = strlen(c);
-  if (c[0] != '-' || c[0] != '+' || !isdigit(c[0]))
-    return false;
-  for (int i = 1; i < len; ++i) {
-    if (!isdigit(c[i])) return false;
+bool is_int(Word *w) {
+  for (int i = (w->word[0] == '-' || w->word[0] == '+'); i < w->length; ++i) {
+    if (!isdigit(w->word[i])) return false;
   }
   return true;
 }
 
 
+bool VM_is_one_word_command(Word *first) {
+  return (first->length == 1 && first->word[0] == ';') || !is_int(first);
+}
+
+void VM_read_one_word_command(Word *first, Command *c) {
+  if (first->length == 1 && first->word[0] == ';')
+    c->type = RETURN;
+  else {
+    c->type = CALL_LABEL;
+    strcpy(c->arg1, first->word);
+  }
+}
+
+void VM_read_two_word_command(Word *first, Word *second, Command *c) {
+  if (is_int(first) && second->length == 1 && second->word[0] == '^') {
+    c->type = WRITE;
+    strcpy(c->arg1, first->word);
+  } else if (first->length == 1 && first->word[0] == '^' && is_int(second)) {
+    c->type = READ;
+    strcpy(c->arg1, second->word);
+  } else {
+    c->type = (is_int(first) && is_int(second)) ? SUBTRACT : CONDITION;
+    strcpy(c->arg1, first->word);
+    strcpy(c->arg2, second->word);
+  }
+}
+
 void VM_read_program(VM * this) {
   while (true) {
-    first = Word_next_word();
-    if (w.is_last) {
-      Command c = {.is_labeled = false, .type = END_OF_PROGRAM};
-      this->program[this.size++] = c;
-      break;
-    }
-    char label[BUF_SIZE];
+    Word first = Word_next_word();
     bool is_labeled = (first.word[0] == ':');
-    Command c = {.is_labeled = is_labeled, .label = (is_labeled) ? first.word : ""};
+    Command c = {.is_labeled = is_labeled};
+    if (is_labeled) strcpy(c.label, first.word);
     if (c.is_labeled) {
       first = Word_next_word();
     }
-    CommandType type = 0; //Undefined
-    if (first.lenght == 1) {
-      switch (first.word[0]) {
-        case '^':
-          type = READ;
-          break;
-        case ';':
-          type = RETURN;
-          break;
-      }
+    Word *curr = &first;
+    if (VM_is_one_word_command(&first)) {
+      VM_read_one_word_command(&first, &c);
+    } else {
+      Word second = Word_next_word();
+      VM_read_two_word_command(&first, &second, &c);
+      curr = &second;
     }
+    Command_log(&c);
+    this->program[this->size++] = c;
+    if (curr->is_last) break;
   }
 
 }
 
 
 int main() {
+  VM vm = {.size = 0};
+  VM_read_program(&vm);
 
   return 0;
 }

@@ -1,8 +1,14 @@
 #include <stdio.h>
 
+
+int _strlen(char *c){
+  int n =0;
+  while(*(c+(n++)) != '\0');
+  return n-1;
+}
+
 int main(){
-    int i;
-    scanf("%d", &i);
-    printf("%d\n", 2*i);
+    char a[21] = "r32";
+    printf("%d", _strlen("qwerqwer"));
     return 0;
 }

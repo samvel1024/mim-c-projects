@@ -78,8 +78,29 @@ typedef struct command_t {
 } Command;
 
 void Command_log(Command * this) {
-  log("Command{\n\tlabel: '%s'\n\targ1: '%s'\n\targ2: '%s'\n\ttype: %d\n}\n", this->label, this->arg1, this->arg2,
-      this->type);
+  char name[];
+  switch (this->type) {
+    case WRITE:
+      name = "WRITE";
+      break;
+    case SUBTRACT:
+      name = "SUBTRACT";
+      break;
+    case READ:
+      name = "READ";
+      break;
+    case CALL_LABEL:
+      name = "CALL_LABEL";
+      break;
+    case CONDITION:
+      name = "CONDITION";
+      break;
+    case RETURN:
+      name = "RETURN";
+      break;
+  }
+  log("Command{\n\tlabel: '%s'\n\targ1: '%s'\n\targ2: '%s'\n\ttype: %s\n}\n", this->label, this->arg1, this->arg2,
+      name);
 }
 
 typedef struct vm_t {

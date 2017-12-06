@@ -17,12 +17,14 @@
 #endif
 
 #define BUF_SIZE 50
-#define ADDR_MIN_NEG 1000
-#define ADDR_MAX_POS 1000
+#define COMMAND_SIZE 3001
+#define ADDR_MIN_NEG 6000
+#define ADDR_MAX_POS 6000
 #define ADDR_SIZE ADDR_MIN_NEG + ADDR_MAX_POS + 1
 
 /**
- * Represents an input word of the program
+ * Represents a word in the bytecode without whitespace
+ * The property is_last is set to true iff the word is followed by EOF or '&'
  */
 typedef struct word_t {
   char word[BUF_SIZE];
@@ -36,7 +38,7 @@ void Word_log(Word *this) {
 }
 
 /**
- * Reads the next word in stdin, terminates reading after first '&' and EOF
+ * Reads the next word in stdin
  */
 Word Word_next_word() {
   char c;
@@ -73,6 +75,8 @@ typedef enum {
   RETURN,
 } CommandType;
 
+const char *COMMAND_NAMES[] = {"WRITE", "READ", "SUBTRACT", "CALL_LABEL", "CONDITION", "RETURN"};
+
 typedef struct command_t {
   char label[BUF_SIZE];
   char arg1[BUF_SIZE];
@@ -83,27 +87,7 @@ typedef struct command_t {
 
 
 void Command_log(Command *this) {
-  char *name = "";
-  switch (this->type) {
-    case WRITE:
-      name = "WRITE";
-      break;
-    case SUBTRACT:
-      name = "SUBTRACT";
-      break;
-    case READ:
-      name = "READ";
-      break;
-    case CALL_LABEL:
-      name = "CALL_LABEL";
-      break;
-    case CONDITION:
-      name = "CONDITION";
-      break;
-    case RETURN:
-      name = "RETURN";
-      break;
-  }
+  const char *name = COMMAND_NAMES[this->type - WRITE];
   log("Command{\n\tlabel: '%s'\n\targ1: '%s'\n\targ2: '%s'\n\ttype: '%s'\n}\n", this->label, this->arg1, this->arg2,
       name);
 }
@@ -111,13 +95,16 @@ void Command_log(Command *this) {
 typedef struct vm_t {
   Command program[1000];
   int size;
+  int memory[ADDR_MIN_NEG + ADDR_MAX_POS];
+  int curr_command;
 } VM;
+
 
 int VM_to_int(char *c) {
   return atoi(c);
 }
 
-bool VM_is_int_ranged(Word *w, int from, int to) {
+bool VM_is_int_between(Word *w, int from, int to) {
   for (int i = from + (w->word[0] == '-' || w->word[0] == '+'); i < to; ++i) {
     if (!isdigit(w->word[i])) return false;
   }
@@ -125,7 +112,7 @@ bool VM_is_int_ranged(Word *w, int from, int to) {
 }
 
 bool VM_is_int(Word *w) {
-  return VM_is_int_ranged(w, 0, w->length);
+  return VM_is_int_between(w, 0, w->length);
 }
 
 
@@ -133,15 +120,42 @@ bool VM_is_one_word_command(Word *first) {
   return (first->length == 1 && first->word[0] == ';') || !VM_is_int(first);
 }
 
+void VM_run_command_at(VM *this, int command) {
+  Command *c = &(this->program[command]);
+  switch (c->type) {
+    case WRITE:
+      break;
+    case READ:
+      break;
+    case SUBTRACT:
+      break;
+    case CALL_LABEL:
+      break;
+    case CONDITION:
+      break;
+    case RETURN:
+      break;
+  }
+
+}
+
+void VM_run_program(VM *this) {
+  this->curr_command = 0;
+  for (this->curr_command = 0; this->curr_command < this->size; ++this->curr_command) {
+
+  }
+}
+
 void VM_read_one_word_command(Word *first, Command *c) {
 
   if (first->length == 1 && first->word[0] == ';') {
     c->type = RETURN;
-  } else if (first->length > 1 && first->word[0] == '^' && VM_is_int_ranged(first, 1, first->length)) {
+  } else if (first->length > 1 && first->word[0] == '^' && VM_is_int_between(first, 1, first->length)) {
     c->type = READ;
     memcpy(c->arg1, &(first->word[1]), first->length - 1);
     c->arg1[first->length - 1] = '\0';
-  } else if (first->length > 1 && first->word[first->length - 1] == '^' && VM_is_int_ranged(first, 0, first->length - 1)) {
+  } else if (first->length > 1 && first->word[first->length - 1] == '^' &&
+             VM_is_int_between(first, 0, first->length - 1)) {
     c->type = WRITE;
     memcpy(c->arg1, &(first->word[0]), first->length - 1);
     c->arg1[first->length - 1] = '\0';
@@ -187,8 +201,9 @@ void VM_read_program(VM *this) {
 
 
 int main() {
-  VM vm = {.size = 0};
-  VM_read_program(&vm);
+//  VM vm = {.size = 0};
+//  VM_read_program(&vm);
+  printf("%d", (int) sizeof(VM));
 
   return 0;
 }

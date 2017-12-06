@@ -22,6 +22,7 @@
 #define ADDR_MAX_POS 6000
 #define ADDR_SIZE ADDR_MIN_NEG + ADDR_MAX_POS + 1
 
+
 /**
  * Represents a word in the bytecode without whitespace
  * The property is_last is set to true iff the word is followed by EOF or '&'
@@ -65,6 +66,20 @@ Word Word_next_word() {
   return w;
 }
 
+bool Word_is_int_between(Word *this, int from, int to) {
+  for (int i = from + (this->word[0] == '-' || this->word[0] == '+'); i < to; ++i) {
+    if (!isdigit(this->word[i])) return false;
+  }
+  return true;
+}
+
+bool Word_is_int(Word *this) {
+  return Word_is_int_between(this, 0, this->length);
+}
+
+bool Word_is_one_word_command(Word *first) {
+  return (first->length == 1 && first->word[0] == ';') || !Word_is_int(first);
+}
 
 typedef enum {
   WRITE = 100,
@@ -96,42 +111,54 @@ typedef struct vm_t {
   Command program[1000];
   int size;
   int memory[ADDR_MIN_NEG + ADDR_MAX_POS];
-  int curr_command;
 } VM;
 
 
-int VM_to_int(char *c) {
-  return atoi(c);
+void VM_write(VM *this, int addr, int val) {
+  this->memory[addr] = val;
 }
 
-bool VM_is_int_between(Word *w, int from, int to) {
-  for (int i = from + (w->word[0] == '-' || w->word[0] == '+'); i < to; ++i) {
-    if (!isdigit(w->word[i])) return false;
+int VM_read(VM *this, int addr) {
+  if (addr < -ADDR_MIN_NEG || addr > ADDR_MAX_POS)
+    return -1 - addr;
+  return this->memory[addr];
+}
+
+int VM_find_label(VM *this, char *label) {
+  for (int i = 0; i < this->size; ++i) {
+    if (strcmp(label, this->program[i].label) == 0)
+      return i;
   }
-  return true;
-}
-
-bool VM_is_int(Word *w) {
-  return VM_is_int_between(w, 0, w->length);
-}
-
-
-bool VM_is_one_word_command(Word *first) {
-  return (first->length == 1 && first->word[0] == ';') || !VM_is_int(first);
+  return -1;
 }
 
 void VM_run_command_at(VM *this, int command) {
   Command *c = &(this->program[command]);
+  int arg1, arg2;
   switch (c->type) {
     case WRITE:
+      arg1 = atoi(c->arg1);
+      putchar(VM_read(this, VM_read(this, arg1)));
       break;
     case READ:
+      arg1 = atoi(c->arg1);
+      int in = getchar();
+      VM_write(this, VM_read(this, arg1), in == EOF ? -1 : in);
       break;
     case SUBTRACT:
+      arg1 = atoi(c->arg1);
+      arg2 = atoi(c->arg2);
+      int val1 = VM_read(this, VM_read(this, arg1));
+      int val2 = VM_read(this, VM_read(this, arg2));
+      VM_write(this, VM_read(this, arg1), val1 - val2);
       break;
     case CALL_LABEL:
+      VM_run_command_at(this, VM_find_label(this, c->arg1));
       break;
     case CONDITION:
+      arg1 = atoi(c->arg1);
+      if (VM_read(this, VM_read(this, arg1)) > 0)
+        VM_run_command_at(this, VM_find_label(this, c->arg2));
       break;
     case RETURN:
       break;
@@ -139,23 +166,33 @@ void VM_run_command_at(VM *this, int command) {
 
 }
 
-void VM_run_program(VM *this) {
-  this->curr_command = 0;
-  for (this->curr_command = 0; this->curr_command < this->size; ++this->curr_command) {
 
+void VM_run_program(VM *this) {
+  for (int curr = 0; curr < this->size; ++curr) {
+    if (!this->program[curr].is_labeled)
+      VM_run_command_at(this, curr);
   }
+}
+
+VM *VM_new() {
+  VM *vm = malloc(sizeof(VM));
+  vm->size = 0;
+  for (int i = -ADDR_MIN_NEG; i < ADDR_MAX_POS; ++i) {
+    VM_write(vm, i, -1 - i);
+  }
+  return vm;
 }
 
 void VM_read_one_word_command(Word *first, Command *c) {
 
   if (first->length == 1 && first->word[0] == ';') {
     c->type = RETURN;
-  } else if (first->length > 1 && first->word[0] == '^' && VM_is_int_between(first, 1, first->length)) {
+  } else if (first->length > 1 && first->word[0] == '^' && Word_is_int_between(first, 1, first->length)) {
     c->type = READ;
     memcpy(c->arg1, &(first->word[1]), first->length - 1);
     c->arg1[first->length - 1] = '\0';
   } else if (first->length > 1 && first->word[first->length - 1] == '^' &&
-             VM_is_int_between(first, 0, first->length - 1)) {
+             Word_is_int_between(first, 0, first->length - 1)) {
     c->type = WRITE;
     memcpy(c->arg1, &(first->word[0]), first->length - 1);
     c->arg1[first->length - 1] = '\0';
@@ -166,7 +203,7 @@ void VM_read_one_word_command(Word *first, Command *c) {
 }
 
 void VM_read_two_word_command(Word *first, Word *second, Command *c) {
-  c->type = (VM_is_int(first) && VM_is_int(second)) ? SUBTRACT : CONDITION;
+  c->type = (Word_is_int(first) && Word_is_int(second)) ? SUBTRACT : CONDITION;
   strcpy(c->arg1, first->word);
   strcpy(c->arg2, second->word);
 
@@ -185,7 +222,7 @@ void VM_read_program(VM *this) {
       first = Word_next_word();
     }
     Word *curr = &first;
-    if (VM_is_one_word_command(&first)) {
+    if (Word_is_one_word_command(&first)) {
       VM_read_one_word_command(&first, &c);
     } else {
       Word second = Word_next_word();
@@ -201,9 +238,9 @@ void VM_read_program(VM *this) {
 
 
 int main() {
-//  VM vm = {.size = 0};
-//  VM_read_program(&vm);
-  printf("%d", (int) sizeof(VM));
-
+  VM *vm = VM_new();
+  VM_read_program(vm);
+  VM_run_program(vm);
+  free(vm);
   return 0;
 }

@@ -214,6 +214,7 @@ void VM_run_stack_peek(VM *self) {
       break;
     case CALL_LABEL:
       log("VM_CALL: %s\n", c->arg1);
+      VM_increment_peek(self);
       VM_push_stack(self, VM_find_labeled(self, c->arg1));
       break;
     case CONDITION:
@@ -228,7 +229,6 @@ void VM_run_stack_peek(VM *self) {
       break;
     case RETURN:
       VM_pop_stack(self);
-      VM_increment_peek(self);
       break;
   }
 

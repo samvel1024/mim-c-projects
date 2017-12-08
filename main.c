@@ -6,8 +6,9 @@
 
 #define MODE_DEBUG
 #ifdef MODE_DEBUG
-#define ENABLE_LOG
+#define ENABLE_LOG 1
 #else
+#define ENABLE_LOG 0
 #endif
 
 #ifdef ENABLE_LOG
@@ -20,7 +21,7 @@
 #define COMMAND_SIZE 3001
 #define ADDR_MIN_NEG 6000
 #define ADDR_MAX_POS 6000
-
+#define STACK_MAX 5000
 
 /**
  * Represents a word in the bytecode without whitespace
@@ -105,14 +106,16 @@ void Command_log(Command *this) {
   log("%s(%s%s%s) %s%s\n", name,
       this->arg1, strlen(this->arg2) == 0 ? "" : ",",
       this->arg2,
-      this -> is_labeled ? "---> " : "",
-      this->is_labeled ? this ->label  : "");
+      this->is_labeled ? "---> " : "",
+      this->is_labeled ? this->label : "");
 }
 
 typedef struct vm_t {
   Command program[1000];
-  int size;
+  int program_len;
   int memory[ADDR_MIN_NEG + ADDR_MAX_POS];
+  int stack[STACK_MAX];
+  int stack_size;
 } VM;
 
 
@@ -129,7 +132,7 @@ int VM_read(VM *this, int addr) {
 }
 
 int VM_find_labeled(VM *this, char *label) {
-  for (int i = 0; i < this->size; ++i) {
+  for (int i = 0; i < this->program_len; ++i) {
     if (strcmp(label, this->program[i].label) == 0) {
       return i;
     }
@@ -137,22 +140,59 @@ int VM_find_labeled(VM *this, char *label) {
   return -1;
 }
 
-void VM_run_command_at(VM *self, int command) {
+void VM_pop_stack(VM *self) {
+  (self->stack_size)--;
+}
+
+int VM_peek_stack(VM *self) {
+  return self->stack[self->stack_size - 1];
+}
+
+void VM_push_stack(VM *self, int ptr) {
+
+  self->stack[self->stack_size] = ptr;
+  self->stack_size = self->stack_size + 1;
+  if (self->stack_size > STACK_MAX) {
+    log("VM_ERR: STACKOVERFLOW\n");
+    exit(1);
+  }
+}
+
+void VM_set_peek(VM *self, int val) {
+  self->stack[self->stack_size - 1] = val;
+}
+
+void VM_increment_peek(VM *self) {
+  (self->stack[self->stack_size - 1])++;
+}
+
+void VM_print_stdout(int val){
+  if (ENABLE_LOG == true)
+    log("VM_PRINT: %c\n", (char) val);
+  else
+     putchar((char) val);
+}
+
+void VM_run_stack_peek(VM *self) {
+  int command = VM_peek_stack(self);
   Command *c = &(self->program[command]);
   int arg1, arg2;
+  log("_________NEXT_COMMAND_____________\n");
+  log("VM: Stack Size %d , Current Command index %d\n", self->stack_size, command);
+  Command_log(c);
+
   switch (c->type) {
     case WRITE:
       arg1 = atoi(c->arg1);
-
-//      putchar((char) VM_read(self, VM_read(self, arg1)));
-      log("VM_PRINT: %c\n", (char) VM_read(self, VM_read(self, arg1)));
+      VM_print_stdout(VM_read(self, VM_read(self, arg1)));
+      VM_increment_peek(self);
       break;
     case READ:
       arg1 = atoi(c->arg1);
       int in = getchar();
       int addr = VM_read(self, arg1);
       VM_write(self, addr, in == EOF ? -1 : in);
-
+      VM_increment_peek(self);
       break;
     case SUBTRACT:
       arg1 = atoi(c->arg1);
@@ -160,38 +200,45 @@ void VM_run_command_at(VM *self, int command) {
       int val1 = VM_read(self, VM_read(self, arg1));
       int val2 = VM_read(self, VM_read(self, arg2));
       VM_write(self, VM_read(self, arg1), val1 - val2);
-
+      VM_increment_peek(self);
       break;
     case CALL_LABEL:
       log("VM_CALL: %s\n", c->arg1);
-      VM_run_command_at(self, VM_find_labeled(self, c->arg1));
+      VM_push_stack(self, VM_find_labeled(self, c->arg1));
       break;
     case CONDITION:
       arg1 = atoi(c->arg1);
-      if (VM_read(self, VM_read(self, arg1)) > 0) {
+      addr = VM_read(self, VM_read(self, arg1));
+      if (VM_read(self, addr) > 0) {
         log("VM_CONDITION_TRUE %s\n", c->arg1);
-        VM_run_command_at(self, VM_find_labeled(self, c->arg2));
+        VM_set_peek(self, VM_find_labeled(self, c->arg2));
+      } else {
+        log("VM_CONDITION_WRONG\n");
+        VM_increment_peek(self);
       }
-      else log("VM_CONDITION_WRONG\n");
       break;
     case RETURN:
+      VM_pop_stack(self);
+      VM_increment_peek(self);
       break;
   }
 
 }
 
 
-void VM_run_program(VM *this) {
+void VM_run_program(VM *self) {
   log("\n\n\n\n***START***\n");
-  for (int curr = 0; curr < this->size; ++curr) {
-    if (!this->program[curr].is_labeled)
-      VM_run_command_at(this, curr);
+  if (self->program_len > 0)
+    VM_push_stack(self, 0);
+  while (self->stack_size > 0 && VM_peek_stack(self) < self->program_len) {
+    VM_run_stack_peek(self);
   }
 }
 
 VM *VM_new() {
   VM *vm = malloc(sizeof(VM));
-  vm->size = 0;
+  vm->program_len = 0;
+  vm->stack_size = 0;
   for (int i = -ADDR_MIN_NEG; i < ADDR_MAX_POS; ++i) {
     VM_write(vm, i, -1 - i);
   }
@@ -246,7 +293,7 @@ void VM_read_program(VM *this) {
       curr = &second;
     }
     Command_log(&c);
-    this->program[this->size++] = c;
+    this->program[this->program_len++] = c;
     if (curr->is_last) break;
   }
 

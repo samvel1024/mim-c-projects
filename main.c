@@ -6,22 +6,23 @@
 
 #define MODE_DEBUG
 #ifdef MODE_DEBUG
-#define ENABLE_LOG 1
+#define log printf
+#define DECORATE_STDOUT true
 #else
-#define ENABLE_LOG 0
+#define log fake_printf
+#define DECORATE_STDOUT false
 #endif
 
-#ifdef ENABLE_LOG
-#define log printf
-#else
-#define log(...)
-#endif
+#define UNUSED(x) (void)(x)
 
 #define BUF_SIZE 50
 #define COMMAND_SIZE 3001
-#define ADDR_MIN_NEG 6000
-#define ADDR_MAX_POS 6000
+#define ADDR_MAX 6000
 #define STACK_MAX 5000
+
+void fake_printf ( const char * format, ... ){
+  UNUSED(format);
+}
 
 /**
  * Represents a word in the bytecode without whitespace
@@ -113,22 +114,31 @@ void Command_log(Command *this) {
 typedef struct vm_t {
   Command program[1000];
   int program_len;
-  int memory[ADDR_MIN_NEG + ADDR_MAX_POS];
+  int memory[2 * ADDR_MAX];
   int stack[STACK_MAX];
   int stack_size;
 } VM;
 
+VM *VM_new() {
+  VM *vm = malloc(sizeof(VM));
+  vm->program_len = 0;
+  vm->stack_size = 0;
+  for (int i = -ADDR_MAX; i < ADDR_MAX; ++i) {
+    vm->memory[i + ADDR_MAX] = -1 - i;
+  }
+  return vm;
+}
 
 void VM_write(VM *this, int addr, int val) {
-  this->memory[addr] = val;
-  log("VM: Write addr %d val %d\n", addr, this->memory[addr]);
+  this->memory[addr + ADDR_MAX] = val;
+  log("VM: Write addr %d val %d\n", addr, this->memory[addr + ADDR_MAX]);
 }
 
 int VM_read(VM *this, int addr) {
-  if (addr < -ADDR_MIN_NEG || addr > ADDR_MAX_POS)
+  if (addr < -ADDR_MAX || addr > ADDR_MAX)
     return -1 - addr;
-  log("VM: Read  addr %d val %d\n", addr, this->memory[addr]);
-  return this->memory[addr];
+  log("VM: Read  addr %d val %d\n", addr, this->memory[addr + ADDR_MAX]);
+  return this->memory[addr + ADDR_MAX];
 }
 
 int VM_find_labeled(VM *this, char *label) {
@@ -166,11 +176,11 @@ void VM_increment_peek(VM *self) {
   (self->stack[self->stack_size - 1])++;
 }
 
-void VM_print_stdout(int val){
-  if (ENABLE_LOG == true)
-    log("VM_PRINT: %c\n", (char) val);
+void VM_print_stdout(int val) {
+  if (DECORATE_STDOUT)
+    log("VM_STDOUT: %c\n", (char) val);
   else
-     putchar((char) val);
+    putchar((char) val);
 }
 
 void VM_run_stack_peek(VM *self) {
@@ -208,8 +218,7 @@ void VM_run_stack_peek(VM *self) {
       break;
     case CONDITION:
       arg1 = atoi(c->arg1);
-      addr = VM_read(self, VM_read(self, arg1));
-      if (VM_read(self, addr) > 0) {
+      if (VM_read(self, VM_read(self, arg1)) > 0) {
         log("VM_CONDITION_TRUE %s\n", c->arg1);
         VM_set_peek(self, VM_find_labeled(self, c->arg2));
       } else {
@@ -235,15 +244,6 @@ void VM_run_program(VM *self) {
   }
 }
 
-VM *VM_new() {
-  VM *vm = malloc(sizeof(VM));
-  vm->program_len = 0;
-  vm->stack_size = 0;
-  for (int i = -ADDR_MIN_NEG; i < ADDR_MAX_POS; ++i) {
-    VM_write(vm, i, -1 - i);
-  }
-  return vm;
-}
 
 void VM_read_one_word_command(Word *first, Command *c) {
 

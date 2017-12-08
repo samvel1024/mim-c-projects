@@ -20,7 +20,6 @@
 #define COMMAND_SIZE 3001
 #define ADDR_MIN_NEG 6000
 #define ADDR_MAX_POS 6000
-#define ADDR_SIZE ADDR_MIN_NEG + ADDR_MAX_POS + 1
 
 
 /**
@@ -103,8 +102,11 @@ typedef struct command_t {
 
 void Command_log(Command *this) {
   const char *name = COMMAND_NAMES[this->type - WRITE];
-  log("Command{\n\tlabel: '%s'\n\targ1: '%s'\n\targ2: '%s'\n\ttype: '%s'\n}\n", this->label, this->arg1, this->arg2,
-      name);
+  log("%s(%s%s%s) %s%s\n", name,
+      this->arg1, strlen(this->arg2) == 0 ? "" : ",",
+      this->arg2,
+      this -> is_labeled ? "---> " : "",
+      this->is_labeled ? this ->label  : "");
 }
 
 typedef struct vm_t {
@@ -116,49 +118,61 @@ typedef struct vm_t {
 
 void VM_write(VM *this, int addr, int val) {
   this->memory[addr] = val;
+  log("VM: Write addr %d val %d\n", addr, this->memory[addr]);
 }
 
 int VM_read(VM *this, int addr) {
   if (addr < -ADDR_MIN_NEG || addr > ADDR_MAX_POS)
     return -1 - addr;
+  log("VM: Read  addr %d val %d\n", addr, this->memory[addr]);
   return this->memory[addr];
 }
 
-int VM_find_label(VM *this, char *label) {
+int VM_find_labeled(VM *this, char *label) {
   for (int i = 0; i < this->size; ++i) {
-    if (strcmp(label, this->program[i].label) == 0)
+    if (strcmp(label, this->program[i].label) == 0) {
       return i;
+    }
   }
   return -1;
 }
 
-void VM_run_command_at(VM *this, int command) {
-  Command *c = &(this->program[command]);
+void VM_run_command_at(VM *self, int command) {
+  Command *c = &(self->program[command]);
   int arg1, arg2;
   switch (c->type) {
     case WRITE:
       arg1 = atoi(c->arg1);
-      putchar(VM_read(this, VM_read(this, arg1)));
+
+//      putchar((char) VM_read(self, VM_read(self, arg1)));
+      log("VM_PRINT: %c\n", (char) VM_read(self, VM_read(self, arg1)));
       break;
     case READ:
       arg1 = atoi(c->arg1);
       int in = getchar();
-      VM_write(this, VM_read(this, arg1), in == EOF ? -1 : in);
+      int addr = VM_read(self, arg1);
+      VM_write(self, addr, in == EOF ? -1 : in);
+
       break;
     case SUBTRACT:
       arg1 = atoi(c->arg1);
       arg2 = atoi(c->arg2);
-      int val1 = VM_read(this, VM_read(this, arg1));
-      int val2 = VM_read(this, VM_read(this, arg2));
-      VM_write(this, VM_read(this, arg1), val1 - val2);
+      int val1 = VM_read(self, VM_read(self, arg1));
+      int val2 = VM_read(self, VM_read(self, arg2));
+      VM_write(self, VM_read(self, arg1), val1 - val2);
+
       break;
     case CALL_LABEL:
-      VM_run_command_at(this, VM_find_label(this, c->arg1));
+      log("VM_CALL: %s\n", c->arg1);
+      VM_run_command_at(self, VM_find_labeled(self, c->arg1));
       break;
     case CONDITION:
       arg1 = atoi(c->arg1);
-      if (VM_read(this, VM_read(this, arg1)) > 0)
-        VM_run_command_at(this, VM_find_label(this, c->arg2));
+      if (VM_read(self, VM_read(self, arg1)) > 0) {
+        log("VM_CONDITION_TRUE %s\n", c->arg1);
+        VM_run_command_at(self, VM_find_labeled(self, c->arg2));
+      }
+      else log("VM_CONDITION_WRONG\n");
       break;
     case RETURN:
       break;
@@ -168,6 +182,7 @@ void VM_run_command_at(VM *this, int command) {
 
 
 void VM_run_program(VM *this) {
+  log("\n\n\n\n***START***\n");
   for (int curr = 0; curr < this->size; ++curr) {
     if (!this->program[curr].is_labeled)
       VM_run_command_at(this, curr);
@@ -210,12 +225,13 @@ void VM_read_two_word_command(Word *first, Word *second, Command *c) {
 }
 
 void VM_read_program(VM *this) {
+  log("\n\n\n\n *** PARSING SOURCE CODE ***\n");
   while (true) {
     Word first = Word_next_word();
     if (first.is_last && first.length == 0)
       break;
     bool is_labeled = (first.word[0] == ':');
-    Command c = {.is_labeled = is_labeled};
+    Command c = {.is_labeled = is_labeled, .arg1 = "", .arg2 = ""};
     if (is_labeled) {
       memcpy(c.label, &(first.word[1]), first.length - 1);
       c.label[first.length - 1] = '\0';

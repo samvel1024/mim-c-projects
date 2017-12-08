@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-#define MODE_DEBUG
+//#define MODE_DEBUG
 #ifdef MODE_DEBUG
 #define log printf
 #define DECORATE_STDOUT true
@@ -16,7 +16,7 @@
 #define UNUSED(x) (void)(x)
 
 #define BUF_SIZE 50
-#define COMMAND_SIZE 3001
+#define PROGRAM_LEN_MAX 3001
 #define ADDR_MAX 6000
 #define STACK_MAX 5000
 
@@ -112,7 +112,7 @@ void Command_log(Command *this) {
 }
 
 typedef struct vm_t {
-  Command program[1000];
+  Command program[PROGRAM_LEN_MAX];
   int program_len;
   int memory[2 * ADDR_MAX];
   int stack[STACK_MAX];

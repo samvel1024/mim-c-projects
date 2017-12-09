@@ -20,7 +20,7 @@
 #define ADDR_MAX 6000
 #define STACK_MAX 5000
 
-void fake_printf ( const char * format, ... ){
+void fake_printf(const char *format, ...) {
   UNUSED(format);
 }
 
@@ -44,7 +44,7 @@ void Word_log(Word *this) {
  */
 Word Word_next_word() {
   char c;
-  while (isspace(c = getchar()));
+  while (isspace(c = getchar()) || c == '|');
   char first = c;
   if (first == EOF || first == '&') {
     Word w = {.is_last = true, .length = 0, .word = "\0"};
@@ -184,44 +184,44 @@ void VM_print_stdout(int val) {
 }
 
 void VM_run_stack_peek(VM *self) {
-  int command = VM_peek_stack(self);
-  Command *c = &(self->program[command]);
+  int comm_index = VM_peek_stack(self);
+  Command *comm = &(self->program[comm_index]);
   int arg1, arg2;
   log("_________NEXT_COMMAND_____________\n");
-  log("VM: Stack Size %d , Current Command index %d\n", self->stack_size, command);
-  Command_log(c);
+  log("VM: Stack Size %d , Current Command index %d\n", self->stack_size, comm_index);
+  Command_log(comm);
 
-  switch (c->type) {
+  switch (comm->type) {
     case WRITE:
-      arg1 = atoi(c->arg1);
+      arg1 = atoi(comm->arg1);
       VM_print_stdout(VM_read(self, VM_read(self, arg1)));
       VM_increment_peek(self);
       break;
     case READ:
-      arg1 = atoi(c->arg1);
+      arg1 = atoi(comm->arg1);
       int in = getchar();
       int addr = VM_read(self, arg1);
       VM_write(self, addr, in == EOF ? -1 : in);
       VM_increment_peek(self);
       break;
     case SUBTRACT:
-      arg1 = atoi(c->arg1);
-      arg2 = atoi(c->arg2);
+      arg1 = atoi(comm->arg1);
+      arg2 = atoi(comm->arg2);
       int val1 = VM_read(self, VM_read(self, arg1));
       int val2 = VM_read(self, VM_read(self, arg2));
       VM_write(self, VM_read(self, arg1), val1 - val2);
       VM_increment_peek(self);
       break;
     case CALL_LABEL:
-      log("VM_CALL: %s\n", c->arg1);
+      log("VM_CALL: %s\n", comm->arg1);
       VM_increment_peek(self);
-      VM_push_stack(self, VM_find_labeled(self, c->arg1));
+      VM_push_stack(self, VM_find_labeled(self, comm->arg1));
       break;
     case CONDITION:
-      arg1 = atoi(c->arg1);
+      arg1 = atoi(comm->arg1);
       if (VM_read(self, VM_read(self, arg1)) > 0) {
-        log("VM_CONDITION_TRUE %s\n", c->arg1);
-        VM_set_peek(self, VM_find_labeled(self, c->arg2));
+        log("VM_CONDITION_TRUE %s\n", comm->arg1);
+        VM_set_peek(self, VM_find_labeled(self, comm->arg2));
       } else {
         log("VM_CONDITION_WRONG\n");
         VM_increment_peek(self);

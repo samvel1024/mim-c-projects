@@ -163,12 +163,12 @@ VM *VM_new() {
   return vm;
 }
 
-void VM_write(VM *self, int addr, int val) {
+void VM_mem_write(VM *self, int addr, int val) {
   self->heap[addr + ADDR_MAX] = val;
   log("VM: Write addr %d val %d\n", addr, self->heap[addr + ADDR_MAX]);
 }
 
-int VM_read(VM *self, int addr) {
+int VM_mem_read(VM *self, int addr) {
   if (addr < -ADDR_MAX || addr > ADDR_MAX)
     return -1 - addr;
   log("VM: Read  addr %d val %d\n", addr, self->heap[addr + ADDR_MAX]);
@@ -213,7 +213,7 @@ void VM_increment_peek(VM *self) {
 
 void VM_exec_write(VM *self, Command *comm) {
   int arg1 = atoi(comm->arg1);
-  int val = VM_read(self, VM_read(self, arg1));
+  int val = VM_mem_read(self, VM_mem_read(self, arg1));
   if (DECORATE_STDOUT)
     log("VM_STDOUT: %c\n", (char) val);
   else
@@ -224,17 +224,17 @@ void VM_exec_write(VM *self, Command *comm) {
 void VM_exec_read(VM *self, Command *comm) {
   int arg1 = atoi(comm->arg1);
   int in = getchar();
-  int addr = VM_read(self, arg1);
-  VM_write(self, addr, in == EOF ? -1 : in);
+  int addr = VM_mem_read(self, arg1);
+  VM_mem_write(self, addr, in == EOF ? -1 : in);
   VM_increment_peek(self);
 }
 
 void VM_exec_subtract(VM *self, Command *comm) {
   int arg1 = atoi(comm->arg1);
   int arg2 = atoi(comm->arg2);
-  int val1 = VM_read(self, VM_read(self, arg1));
-  int val2 = VM_read(self, VM_read(self, arg2));
-  VM_write(self, VM_read(self, arg1), val1 - val2);
+  int val1 = VM_mem_read(self, VM_mem_read(self, arg1));
+  int val2 = VM_mem_read(self, VM_mem_read(self, arg2));
+  VM_mem_write(self, VM_mem_read(self, arg1), val1 - val2);
   VM_increment_peek(self);
 }
 
@@ -246,7 +246,7 @@ void VM_exec_call_label(VM *self, Command *comm) {
 
 void VM_exec_condition(VM *self, Command *comm) {
   int arg1 = atoi(comm->arg1);
-  if (VM_read(self, VM_read(self, arg1)) > 0) {
+  if (VM_mem_read(self, VM_mem_read(self, arg1)) > 0) {
     log("VM_CONDITION_TRUE %s\n", comm->arg1);
     VM_set_peek(self, VM_find_labeled(self, comm->arg2));
   } else {

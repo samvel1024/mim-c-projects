@@ -24,64 +24,6 @@ void fake_printf(const char *format, ...) {
   UNUSED(format);
 }
 
-/**
- * Represents a word in the bytecode without whitespace
- * The property is_last is set to true iff the word is followed by EOF or '&'
- */
-typedef struct word_t {
-  char word[BUF_SIZE];
-  int length;
-  bool is_last;
-} Word;
-
-
-void Word_log(Word *this) {
-  log("Word{\n\tword: '%s'\n\tsize: %d\n\tis_last: %d\n}\n", this->word, this->length, this->is_last);
-}
-
-/**
- * Reads the next word in stdin
- */
-Word Word_next_word() {
-  char c;
-  while (isspace(c = getchar()) || c == '|');
-  char first = c;
-  if (first == EOF || first == '&') {
-    Word w = {.is_last = true, .length = 0, .word = "\0"};
-    return w;
-  }
-  Word w;
-  w.length = 1;
-  w.word[0] = first;
-  w.word[1] = '\0';
-  w.is_last = false;
-  while (!isspace(c = getchar())) {
-    if (c == EOF || c == '&') {
-      w.is_last = true;
-      break;
-    }
-    w.word[w.length++] = c;
-    w.word[w.length] = '\0';
-  }
-//  Word_log(&w);
-  return w;
-}
-
-bool Word_is_int_between(Word *this, int from, int to) {
-  for (int i = from + (this->word[0] == '-' || this->word[0] == '+'); i < to; ++i) {
-    if (!isdigit(this->word[i])) return false;
-  }
-  return true;
-}
-
-bool Word_is_int(Word *this) {
-  return Word_is_int_between(this, 0, this->length);
-}
-
-bool Word_is_one_word_command(Word *first) {
-  return (first->length == 1 && first->word[0] == ';') || !Word_is_int(first);
-}
-
 typedef enum {
   WRITE = 100,
   READ,
@@ -104,12 +46,106 @@ typedef struct command_t {
 
 void Command_log(Command *this) {
   const char *name = COMMAND_NAMES[this->type - WRITE];
-  log("%s(%s%s%s) %s%s\n", name,
+  log("%s(%s%s%s) %s %s\n", name,
       this->arg1, strlen(this->arg2) == 0 ? "" : ",",
       this->arg2,
-      this->is_labeled ? "---> " : "",
+      this->is_labeled ? "DEFINE" : "",
       this->is_labeled ? this->label : "");
 }
+
+typedef struct parser_t {
+  char buff;
+  bool has_next;
+} Parser;
+
+bool Parser_read(Parser *self) {
+  if (!self->has_next) return false;
+  char c = (char) getchar();
+  self->buff = c;
+  self->has_next = c != EOF && c != '&';
+  return self->has_next;
+}
+
+
+bool Parser_is_whitespace(char c) {
+  return isspace(c) || c == '|';
+}
+
+bool Parser_not_whitespace(char c) {
+  return !isspace(c);
+}
+
+bool Parser_is_number(char c) {
+  return isdigit(c) || c == '-' || c == '+';
+}
+
+
+void Parser_skip(Parser *self) {
+  while (self->has_next && Parser_is_whitespace(self->buff) && Parser_read(self));
+}
+
+Parser* Parser_new(){
+  Parser *self = malloc(sizeof(Parser));
+  self -> has_next = true;
+  Parser_read(self);
+  Parser_skip(self);
+  return self;
+}
+
+
+void Parser_read_word(Parser *self, char *buff, bool (*filter)(char)) {
+  int i = 0;
+  while (filter(self->buff) && self->has_next) {
+    buff[i++] = self->buff;
+    Parser_read(self);
+  }
+}
+
+void Parser_read_label(Parser *self, Command *c) {
+  if (self->buff != ':')
+    return;
+  Parser_read(self);
+  Parser_skip(self);
+  Parser_read_word(self, c->label, Parser_not_whitespace);
+  Parser_skip(self);
+  c->is_labeled = true;
+}
+
+Command Parser_next_command(Parser *self) {
+  Command c = {.is_labeled = false, .arg1 = "", .arg2 = "", .type = 0, .label = ""};
+  Parser_read_label(self, &c);
+  if (self->buff == ';') {
+    c.type = RETURN;
+    Parser_read(self);
+  }
+  else if (self->buff == '^') {
+    Parser_read(self);
+    Parser_skip(self);
+    Parser_read_word(self, c.arg1, Parser_is_number);
+    c.type = READ;
+  } else if (Parser_is_number(self->buff)) {
+    Parser_read_word(self, c.arg1, Parser_is_number);
+    Parser_skip(self);
+    if (self -> buff == '^'){
+      Parser_read(self);
+      c.type = WRITE;
+    }else if (Parser_is_number(self -> buff)){
+      Parser_read_word(self, c.arg2, Parser_is_number);
+      c.type = SUBTRACT;
+    }
+    else {
+      Parser_read_word(self, c.arg2, Parser_not_whitespace);
+      c.type = CONDITION;
+    }
+  }else {
+    Parser_read_word(self, c.arg1, Parser_not_whitespace);
+    c.type = CALL_LABEL;
+  }
+  Parser_skip(self);
+  return c;
+
+}
+
 
 typedef struct vm_t {
   Command program[PROGRAM_LEN_MAX];
@@ -245,58 +281,16 @@ void VM_run_program(VM *self) {
 }
 
 
-void VM_read_one_word_command(Word *first, Command *c) {
-
-  if (first->length == 1 && first->word[0] == ';') {
-    c->type = RETURN;
-  } else if (first->length > 1 && first->word[0] == '^' && Word_is_int_between(first, 1, first->length)) {
-    c->type = READ;
-    memcpy(c->arg1, &(first->word[1]), first->length - 1);
-    c->arg1[first->length - 1] = '\0';
-  } else if (first->length > 1 && first->word[first->length - 1] == '^' &&
-             Word_is_int_between(first, 0, first->length - 1)) {
-    c->type = WRITE;
-    memcpy(c->arg1, &(first->word[0]), first->length - 1);
-    c->arg1[first->length - 1] = '\0';
-  } else {
-    c->type = CALL_LABEL;
-    strcpy(c->arg1, first->word);
+void VM_read_program(VM *self) {
+  log("*** PARSING SOURCE CODE ***\n");
+  Parser *parser = Parser_new();
+  while (parser -> has_next) {
+    Command command = Parser_next_command(parser);
+    log("%d\t", self -> program_len);
+    Command_log(&command);
+    self->program[self -> program_len ++] = command;
   }
-}
-
-void VM_read_two_word_command(Word *first, Word *second, Command *c) {
-  c->type = (Word_is_int(first) && Word_is_int(second)) ? SUBTRACT : CONDITION;
-  strcpy(c->arg1, first->word);
-  strcpy(c->arg2, second->word);
-
-}
-
-void VM_read_program(VM *this) {
-  log("\n\n\n\n *** PARSING SOURCE CODE ***\n");
-  while (true) {
-    Word first = Word_next_word();
-    if (first.is_last && first.length == 0)
-      break;
-    bool is_labeled = (first.word[0] == ':');
-    Command c = {.is_labeled = is_labeled, .arg1 = "", .arg2 = ""};
-    if (is_labeled) {
-      memcpy(c.label, &(first.word[1]), first.length - 1);
-      c.label[first.length - 1] = '\0';
-      first = Word_next_word();
-    }
-    Word *curr = &first;
-    if (Word_is_one_word_command(&first)) {
-      VM_read_one_word_command(&first, &c);
-    } else {
-      Word second = Word_next_word();
-      VM_read_two_word_command(&first, &second, &c);
-      curr = &second;
-    }
-    Command_log(&c);
-    this->program[this->program_len++] = c;
-    if (curr->is_last) break;
-  }
-
+  free(parser);
 }
 
 

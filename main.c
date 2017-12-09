@@ -179,7 +179,7 @@ int VM_read(VM *this, int addr) {
 
 int VM_find_labeled(VM *this, char *label) {
   for (int i = 0; i < this->program_len; ++i) {
-    if (strcmp(label, this->program[i].label) == 0) {
+    if (this -> program[i].is_labeled && strcmp(label, this->program[i].label) == 0) {
       return i;
     }
   }

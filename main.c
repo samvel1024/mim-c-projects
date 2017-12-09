@@ -194,8 +194,7 @@ int VM_peek_stack(VM *self) {
 
 void VM_push_stack(VM *self, int ptr) {
 
-  self->stack[self->stack_size] = ptr;
-  self->stack_size = self->stack_size + 1;
+  self->stack[self->stack_size++] = ptr;
   if (self->stack_size > STACK_MAX) {
     log("VM_ERR: STACKOVERFLOW\n");
     exit(1);

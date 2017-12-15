@@ -15,7 +15,7 @@
 
 #define UNUSED(x) (void)(x)
 
-#define BUF_SIZE 50
+#define BUF_SIZE 100
 #define PROGRAM_LEN_MAX 3001
 #define ADDR_MAX 6000
 #define STACK_MAX 5000
@@ -240,7 +240,8 @@ void VM_exec_subtract(VM *self, Command *comm) {
 void VM_exec_call_label(VM *self, Command *comm) {
   log("VM_CALL: %s\n", comm->arg1);
   VM_increment_peek(self);
-  VM_push_stack(self, VM_find_labeled(self, comm->arg1));
+  if (strlen(comm -> arg1) > 0)
+    VM_push_stack(self, VM_find_labeled(self, comm->arg1));
 }
 
 void VM_exec_condition(VM *self, Command *comm) {

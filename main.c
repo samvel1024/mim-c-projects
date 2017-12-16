@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-//#define MODE_DEBUG
+#define MODE_DEBUG
 #ifdef MODE_DEBUG
 #define log printf
 #define DECORATE_STDOUT true

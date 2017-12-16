@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-#define MODE_DEBUG
+//#define MODE_DEBUG
 #ifdef MODE_DEBUG
 #define log printf
 #define DECORATE_STDOUT true
@@ -31,15 +31,14 @@ typedef enum {
   CALL_LABEL,
   CONDITION,
   RETURN,
+  LABEL
 } CommandType;
 
-const char *COMMAND_NAMES[] = {"WRITE", "READ", "SUBTRACT", "CALL_LABEL", "CONDITION", "RETURN"};
+const char *COMMAND_NAMES[] = {"WRITE", "READ", "SUBTRACT", "CALL_LABEL", "CONDITION", "RETURN", "LABEL"};
 
 typedef struct command_t {
-  char label[BUF_SIZE];
   char arg1[BUF_SIZE];
   char arg2[BUF_SIZE];
-  bool is_labeled;
   CommandType type;
 } Command;
 
@@ -48,9 +47,7 @@ void Command_log(Command *this) {
   const char *name = COMMAND_NAMES[this->type];
   log("%s(%s%s%s) %s %s\n", name,
       this->arg1, strlen(this->arg2) == 0 ? "" : ",",
-      this->arg2,
-      this->is_labeled ? "DEFINE" : "",
-      this->is_labeled ? this->label : "");
+      this->arg2);
 }
 
 typedef struct parser_t {
@@ -72,7 +69,7 @@ bool Parser_is_whitespace(char c) {
 }
 
 bool Parser_not_whitespace(char c) {
-  return !isspace(c);
+  return  !isspace(c) && c!= ';';
 }
 
 bool Parser_is_number(char c) {
@@ -102,19 +99,19 @@ void Parser_read_word(Parser *self, char *buff, bool (*filter)(char)) {
 }
 
 void Parser_read_label(Parser *self, Command *c) {
-  if (self->buff != ':')
-    return;
   Parser_read(self);
   Parser_skip(self);
-  Parser_read_word(self, c->label, Parser_not_whitespace);
+  Parser_read_word(self, c->arg1, Parser_not_whitespace);
   Parser_skip(self);
-  c->is_labeled = true;
 }
 
 Command Parser_next_command(Parser *self) {
-  Command c = {.is_labeled = false, .arg1 = "", .arg2 = "", .type = -1, .label = ""};
-  Parser_read_label(self, &c);
-  if (self->buff == ';') {
+  Command c = {.arg1 = "", .arg2 = "", .type = -1};
+  if (self -> buff == ':'){
+    Parser_read_label(self, &c);
+    c.type = LABEL;
+  }
+  else if (self->buff == ';') {
     c.type = RETURN;
     Parser_read(self);
   } else if (self->buff == '^') {
@@ -177,7 +174,7 @@ int VM_mem_read(VM *self, int addr) {
 
 int VM_find_labeled(VM *self, char *label) {
   for (int i = 0; i < self->program_len; ++i) {
-    if (self->program[i].is_labeled && strcmp(label, self->program[i].label) == 0) {
+    if (self->program[i].type == LABEL && strcmp(label, self->program[i].arg1) == 0) {
       return i;
     }
   }
@@ -260,7 +257,12 @@ void VM_exec_return(VM *self, Command *comm) {
   VM_pop_stack(self);
 }
 
-void (*VM_COMMAND_EXECUTORS[])(VM*, Command*) = {VM_exec_write, VM_exec_read, VM_exec_subtract, VM_exec_call_label, VM_exec_condition, VM_exec_return};
+void VM_exec_label(VM *self, Command *comm){
+  UNUSED(comm);
+  VM_increment_peek(self);
+}
+
+void (*VM_COMMAND_EXECUTORS[])(VM*, Command*) = {VM_exec_write, VM_exec_read, VM_exec_subtract, VM_exec_call_label, VM_exec_condition, VM_exec_return, VM_exec_label};
 
 void VM_run_stack_peek(VM *self) {
   int comm_index = VM_peek_stack(self);

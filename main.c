@@ -11,8 +11,8 @@ typedef struct P {
 
 Pair next(Pair curr) {
   int left = curr.left + 1 == curr.right ? curr.right + 1 : curr.left + 1;
-  int right =  left + 1;
-  while(right < N && A[left] != A[right]){
+  int right = left + 1;
+  while (right < N && A[left] != A[right]) {
     right++;
   }
   Pair p = {.left = left, .right = right};
@@ -20,19 +20,16 @@ Pair next(Pair curr) {
 }
 
 
-
 int main() {
-
   scanf("%d", &N);
   for (int i = 0; i < N; ++i) {
     scanf("%d", &A[i]);
   }
-
-  int covered = 0;
+  int covered = -2;
   Pair curr = {-1, -1};
-  while(curr.right < N){
-    curr = next(curr);
+  while (curr.right < N) {
     covered += 2;
+    curr = next(curr);
   }
   printf("%d\n", covered == N);
   return 0;

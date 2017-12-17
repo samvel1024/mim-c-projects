@@ -9,9 +9,13 @@ typedef struct P {
   int right;
 } Pair;
 
+int max(int a, int b) {
+  return a < b ? b : a;
+}
+
 Pair next(Pair curr) {
   int left = curr.left + 1 == curr.right ? curr.right + 1 : curr.left + 1;
-  int right = left + 1;
+  int right = max(curr.right + 1, left + 1);
   while (right < N && A[left] != A[right]) {
     right++;
   }

@@ -1,33 +1,45 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct list_t{
-  int val;
-  struct list_t *next;
-}List;
 
-List* List_new(int val, List *next){
-  List *l = malloc(sizeof(List));
-  l -> val = val;
-  l -> next = next;
-  return l;
+typedef struct node_t {
+  struct node_t *next;
+  int val;
+} Node;
+
+Node *Node_new(int val, Node *next) {
+  Node *n = malloc(sizeof(Node));
+  n->val = val;
+  n->next = next;
+  return n;
 }
 
-List* List_new_stdin(){
-  int size;
+
+void LL_print(Node *head) {
+  if (head == NULL) return;
+  do {
+    printf("%d ", head->val);
+    head = head->next;
+  } while (head != NULL);
+}
+
+
+Node *LL_read() {
+  int size = 0;
   scanf("%d", &size);
-  List *l = NULL;
-  while(size--){
+  Node *head = NULL;
+  Node **curr = &head;
+  while (size--) {
     int val;
     scanf("%d", &val);
-    l = List_new(val, NULL);
-
-
+    *curr = Node_new(val, NULL);
+    curr = &((*curr)->next);
   }
-  return l;
+  return head;
 }
 
-
-int main(){
-
+int main() {
+  Node *head = LL_read();
+  LL_print(head);
+  return 0;
 }

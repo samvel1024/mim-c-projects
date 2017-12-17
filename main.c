@@ -38,8 +38,31 @@ Node *LL_read() {
   return head;
 }
 
+Node **LL_min(Node **one, Node **two) {
+  if (*one == NULL)
+    return two;
+  if (*two == NULL)
+    return one;
+  return (*one)->val < (*two)->val ? one : two;
+}
+
+Node *LL_merge(Node **one, Node **two) {
+  Node **head = LL_min(one, two);
+  Node **prev_min = head;
+  (*prev_min) -> next = *head;
+  while((*one) -> next != NULL && (*two) -> next != NULL){
+    Node **min = LL_min(one, two);
+    printf("%d ", (*min) -> val);
+    (*prev_min) -> next = *min;
+    (*min) = (*min) -> next;
+  }
+  return *head;
+}
+
 int main() {
-  Node *head = LL_read();
-  LL_print(head);
+  Node *first = LL_read();
+  Node *second = LL_read();
+  Node *merged = LL_merge(&first, &second);
+  LL_print(merged);
   return 0;
 }

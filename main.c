@@ -1,11 +1,10 @@
 #include <stdio.h>
 
 
-void swap(int *x, int *y) {
-  int temp;
-  temp = *x;
-  *x = *y;
-  *y = temp;
+void swap(int A[], int x, int y) {
+  int temp = A[x];
+  A[x] = A[y];
+  A[y] = temp;
 }
 
 
@@ -17,9 +16,9 @@ void permute(int perm[], int left, int right, int len) {
     printf("\n");
   }
   for (int i = left; i <= right; i++) {
-    swap((perm + left), (perm + i));
+    swap(perm, left,i);
     permute(perm, left + 1, right, len);
-    swap((perm + left), (perm + i)); //backtrack
+    swap(perm , left, i);
   }
 
 }

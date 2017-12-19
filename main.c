@@ -9,16 +9,16 @@ void swap(int *x, int *y) {
 }
 
 
-void permute(int perm[], int left, int right, int N) {
+void permute(int perm[], int left, int right, int len) {
 
   if (left == right) {
-    for (int i = 0; i < N; ++i)
+    for (int i = 0; i < len; ++i)
       printf("%d ", perm[i]);
     printf("\n");
   }
   for (int i = left; i <= right; i++) {
     swap((perm + left), (perm + i));
-    permute(perm, left + 1, right, N);
+    permute(perm, left + 1, right, len);
     swap((perm + left), (perm + i)); //backtrack
   }
 

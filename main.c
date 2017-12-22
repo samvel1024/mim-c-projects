@@ -21,6 +21,7 @@ void LL_print(Node *head) {
     printf("%d ", head->val);
     head = head->next;
   } while (head != NULL);
+  printf("\n");
 }
 
 
@@ -38,8 +39,24 @@ Node *LL_read() {
   return head;
 }
 
+Node *LL_reverse(Node *head) {
+  if (head == NULL) return NULL;
+  Node *prev = head;
+  Node *curr = head->next;
+  while (curr != NULL) {
+    Node *temp_next = curr -> next;
+    curr->next = prev;
+    prev = curr;
+    curr = temp_next;
+  }
+  head->next = NULL;
+  return prev;
+}
+
+
 int main() {
   Node *head = LL_read();
+  head = LL_reverse(head);
   LL_print(head);
   return 0;
 }

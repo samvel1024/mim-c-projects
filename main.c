@@ -64,27 +64,26 @@ Matrix *Matrix_read() {
 }
 
 
-int mark_deleted(Matrix *m, bool deleted[], int selected_row) {
-  int covered = 0;
+void mark_deleted(Matrix *m, bool deleted[], int selected_row, int *deletion, int *cover) {
   for (int c = 0; c < m->cols; ++c) {
     if (m->matrix[selected_row][c] == NONE) continue;
-    covered++;
+    (*cover)++;
     for (int r = 0; r < m->rows; ++r) {
       if (deleted[r]) continue;
       if (m->matrix[r][c] != NONE) {
         deleted[r] = true;
+        (*deletion)++;
       }
     }
   }
-  return covered;
 }
 
 
-void backtrack(Matrix *m, int taken[], int taken_len, bool deleted[], int covered) {
+void backtrack(Matrix *m, int taken[], int taken_len, bool deleted[], int covered, int deletions) {
 
   if (covered == m->cols) {
     for (int i = 0; i < taken_len; ++i)
-      printf("%d ", taken[i]);
+      printf("%d ", taken[i]);  
     printf("\n");
     return;
   }
@@ -95,8 +94,9 @@ void backtrack(Matrix *m, int taken[], int taken_len, bool deleted[], int covere
     memcpy(del_cpy, deleted, m->rows);
     del_cpy[r] = true;
     taken[taken_len] = r;
-    int curr_covered = mark_deleted(m, del_cpy, r);
-    backtrack(m, taken, taken_len + 1, del_cpy, covered + curr_covered);
+    int curr_covered = 0, curr_del = 0;
+    mark_deleted(m, del_cpy, r, &curr_del, &curr_covered);
+    backtrack(m, taken, taken_len + 1, del_cpy, covered + curr_covered, deletions + curr_del);
   }
 
 }
@@ -106,6 +106,8 @@ int main() {
   Matrix *m = Matrix_read();
   bool *del = calloc((size_t) m->rows, sizeof(bool));
   int taken[m->cols];
-  backtrack(m, taken, 0, del, 0);
+  backtrack(m, taken, 0, del, 0, 0);
+  free(del);
+  free(m);
   return 0;
 }

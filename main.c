@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define MAX_LEN 1000
 
@@ -41,7 +42,7 @@ Matrix *Matrix_read() {
   Matrix *m = malloc(sizeof(Matrix));
   m->rows = m->cols = 0;
   char buff[MAX_LEN];
-  int len =  0;
+  int len = 0;
   read_line(buff, &len);
   m->cols = len;
   for (int i = 0; i < m->cols; ++i) {
@@ -63,11 +64,39 @@ Matrix *Matrix_read() {
 }
 
 
-void backtrack(Matrix *m, int taken[], int taken_len, int remaining[], int remaining_len){
+int mark_deleted(Matrix *m, bool deleted[], int selected_row) {
+  int covered = 0;
+  for (int c = 0; c < m->cols; ++c) {
+    if (m->matrix[selected_row][c] == NONE) continue;
+    covered++;
+    for (int r = 0; r < m->rows; ++r) {
+      if (deleted[r]) continue;
+      if (m->matrix[r][c] != NONE) {
+        deleted[r] = true;
+      }
+    }
+  }
+  return covered;
+}
 
-  for (int c=0; c<remaining_len; ++c){
-    taken[taken_len] = remaining[c];
-    backtrack(m, taken, taken_len+1, )
+
+void backtrack(Matrix *m, int taken[], int taken_len, bool deleted[], int covered) {
+
+  if (covered == m->cols) {
+    for (int i = 0; i < taken_len; ++i)
+      printf("%d ", taken[i]);
+    printf("\n");
+    return;
+  }
+
+  for (int r = 0; r < m->rows; ++r) {
+    if (deleted[r]) continue;
+    bool del_cpy[m->rows];
+    memcpy(del_cpy, deleted, m->rows);
+    del_cpy[r] = true;
+    taken[taken_len] = r;
+    int curr_covered = mark_deleted(m, del_cpy, r);
+    backtrack(m, taken, taken_len + 1, del_cpy, covered + curr_covered);
   }
 
 }
@@ -75,6 +104,8 @@ void backtrack(Matrix *m, int taken[], int taken_len, int remaining[], int remai
 
 int main() {
   Matrix *m = Matrix_read();
-  Matrix_print(m);
+  bool *del = calloc((size_t) m->rows, sizeof(bool));
+  int taken[m->cols];
+  backtrack(m, taken, 0, del, 0);
   return 0;
 }

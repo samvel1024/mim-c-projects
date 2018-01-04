@@ -78,17 +78,31 @@ void mark_deleted(Matrix *m, bool deleted[], int selected_row, int *deletion, in
   }
 }
 
+void print_filtered(Matrix *m, int taken[], int taken_len) {
+  char selections[m->cols];
+  for (int i = 0; i < taken_len; ++i) {
+    for (int j = 0; j < m->cols; ++j) {
+      char ch = m->matrix[taken[i]][j];
+      if (ch == NONE) continue;
+      selections[j] = ch;
+    }
+  }
+
+  for (int i=0; i<m->cols; ++i)
+    if (m->filter[i])
+      printf("%c", selections[i]);
+  printf("\n");
+}
 
 void backtrack(Matrix *m, int taken[], int taken_len, bool deleted[], int covered, int deletions) {
 
   if (covered == m->cols) {
-    for (int i = 0; i < taken_len; ++i)
-      printf("%d ", taken[i]);  
-    printf("\n");
+    print_filtered(m, taken, taken_len);
     return;
   }
 
-  for (int r = 0; r < m->rows; ++r) {
+  int initial_row = taken_len == 0 ? 0 : taken[taken_len - 1];
+  for (int r = initial_row; r < m->rows; ++r) {
     if (deleted[r]) continue;
     bool del_cpy[m->rows];
     memcpy(del_cpy, deleted, m->rows);

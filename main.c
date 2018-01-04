@@ -48,7 +48,6 @@ Matrix *Matrix_read() {
     m->filter[i] = buff[i] == '+';
   }
 
-
   bool has_next = read_line(buff, &len);
   while (has_next) {
     if (len == m->cols) {
@@ -61,6 +60,16 @@ Matrix *Matrix_read() {
   }
 
   return m;
+}
+
+
+void backtrack(Matrix *m, int taken[], int taken_len, int remaining[], int remaining_len){
+
+  for (int c=0; c<remaining_len; ++c){
+    taken[taken_len] = remaining[c];
+    backtrack(m, taken, taken_len+1, )
+  }
+
 }
 
 

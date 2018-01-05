@@ -88,29 +88,35 @@ void print_filtered(Matrix *m, int taken[], int taken_len) {
     }
   }
 
-  for (int i=0; i<m->cols; ++i)
+  for (int i = 0; i < m->cols; ++i)
     if (m->filter[i])
       printf("%c", selections[i]);
   printf("\n");
 }
 
-void backtrack(Matrix *m, int taken[], int taken_len, bool deleted[], int covered, int deletions) {
+void backtrack(Matrix *m, int taken[], int taken_len, bool deleted[], int current, bool covered[]) {
 
-  if (covered == m->cols) {
+  if (current == m->cols) {
     print_filtered(m, taken, taken_len);
     return;
   }
 
-  int initial_row = taken_len == 0 ? 0 : taken[taken_len - 1];
-  for (int r = initial_row; r < m->rows; ++r) {
-    if (deleted[r]) continue;
+  for (int r = 0; r < m->rows; ++r) {
+    if (deleted[r] || m->matrix[r][current] == NONE) continue;
     bool del_cpy[m->rows];
+    bool cov_cpy[m->rows];
+    memcpy(cov_cpy, covered, m->rows);
     memcpy(del_cpy, deleted, m->rows);
     del_cpy[r] = true;
     taken[taken_len] = r;
     int curr_covered = 0, curr_del = 0;
     mark_deleted(m, del_cpy, r, &curr_del, &curr_covered);
-    backtrack(m, taken, taken_len + 1, del_cpy, covered + curr_covered, deletions + curr_del);
+    for (int c = current; c < m->cols; ++c)
+      if (m->matrix[r][c] != NONE) cov_cpy[c] = true;
+    int next_uncovered = current + 1;
+    while (cov_cpy[next_uncovered] && next_uncovered < m->cols)
+      ++next_uncovered;
+    backtrack(m, taken, taken_len + 1, del_cpy, next_uncovered, cov_cpy);
   }
 
 }
@@ -119,8 +125,9 @@ void backtrack(Matrix *m, int taken[], int taken_len, bool deleted[], int covere
 int main() {
   Matrix *m = Matrix_read();
   bool *del = calloc((size_t) m->rows, sizeof(bool));
+  bool *covered = calloc((size_t) m->rows, sizeof(bool));
   int taken[m->cols];
-  backtrack(m, taken, 0, del, 0, 0);
+  backtrack(m, taken, 0, del, 0, covered);
   free(del);
   free(m);
   return 0;

@@ -27,16 +27,6 @@ bool read_line(char buff[], int *len) {
   return c != EOF;
 }
 
-void Matrix_print(Matrix *self) {
-  for (int i = 0; i < self->cols; ++i)
-    printf("%d", self->filter[i]);
-  printf("\n");
-  for (int i = 0; i < self->rows; ++i) {
-    for (int j = 0; j < self->cols; ++j)
-      printf("%c", self->matrix[i][j]);
-    printf("\n");
-  }
-}
 
 Matrix *Matrix_read() {
   Matrix *m = malloc(sizeof(Matrix));

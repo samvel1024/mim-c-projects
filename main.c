@@ -154,7 +154,7 @@ bool *mark_covered(Matrix *m, bool covered[], int current_col, int selected_row)
 int main() {
   Matrix *m = Matrix_read();
   bool *del = calloc((size_t) m->rows, sizeof(bool));
-  bool *covered = calloc((size_t) m->rows, sizeof(bool));
+  bool *covered = calloc((size_t) m->cols, sizeof(bool));
   int *taken = malloc(sizeof(int) * m->cols);
   backtrack(m, taken, 0, del, 0, covered);
   free(del);

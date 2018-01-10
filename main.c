@@ -15,15 +15,6 @@ Node *Node_new(int val, Node *next) {
 }
 
 
-void LL_print(Node *head) {
-  if (head == NULL) return;
-  do {
-    printf("%d ", head->val);
-    head = head->next;
-  } while (head != NULL);
-}
-
-
 Node *LL_read() {
   int size = 0;
   scanf("%d", &size);
@@ -38,8 +29,27 @@ Node *LL_read() {
   return head;
 }
 
+
+Node *remove_negative(Node *l) {
+  Node *head = l;
+  while (head != NULL && head->val < 0) {
+    head = head->next;
+  }
+  Node *curr = head;
+  while (curr != NULL) {
+    if (curr->next != NULL && curr->next->val < 0)
+      curr->next = curr->next->next;
+    else curr = curr->next;
+  }
+  return head;
+}
+
 int main() {
   Node *head = LL_read();
-  LL_print(head);
+  Node *l = remove_negative(head);
+  while (l != NULL) {
+    printf("%d ", l->val);
+    l = l->next;
+  }
   return 0;
 }

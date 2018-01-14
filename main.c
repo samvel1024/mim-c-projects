@@ -1,6 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/**
+ * Given singly linked list perform following operations
+ *
+ * Remove item from list if value is negative
+ * Given value of item is N replace the node with N ones
+ * Do nothing if value is 0
+ */
 
 typedef struct node_t {
   struct node_t *next;
@@ -12,15 +19,6 @@ Node *Node_new(int val, Node *next) {
   n->val = val;
   n->next = next;
   return n;
-}
-
-
-void LL_print(Node *head) {
-  if (head == NULL) return;
-  do {
-    printf("%d ", head->val);
-    head = head->next;
-  } while (head != NULL);
 }
 
 
@@ -38,8 +36,59 @@ Node *LL_read() {
   return head;
 }
 
+void LL_print(Node *head){
+  while(head){
+    printf("%d ", head -> val);
+    head = head -> next;
+  }
+  printf("\n");
+
+}
+
+
+Node *link_ones_to(Node *next, int count) {
+  Node *one = Node_new(1, next);
+  for (int i = 1; i < count; ++i) {
+    one = Node_new(1, one);
+  }
+  return one;
+}
+
+
+Node *replace_add(Node *head) {
+  while (head && head->val < 0) {
+    head = head->next;
+  }
+
+  if (head && head->val > 0) {
+    head = link_ones_to(head->next, head->val);
+  }
+
+  Node *prev = head;
+  Node *curr = head;
+
+  while (curr) {
+
+    if (curr->val > 1) {
+      Node *added = link_ones_to(curr->next, curr->val);
+      prev->next = added;
+      curr = added;
+    } else if (curr->val < 0) {
+      prev->next = curr->next;
+      curr = curr->next;
+    } else  {
+      prev = curr;
+      curr = curr->next;
+    }
+
+  }
+  return head;
+}
+
 int main() {
   Node *head = LL_read();
+  head = replace_add(head);
   LL_print(head);
+
   return 0;
 }

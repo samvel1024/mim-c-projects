@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 
 typedef struct node_t {
@@ -21,6 +22,7 @@ void LL_print(Node *head) {
     printf("%d ", head->val);
     head = head->next;
   } while (head != NULL);
+  putchar('\n');
 }
 
 
@@ -38,8 +40,31 @@ Node *LL_read() {
   return head;
 }
 
+void group(Node *head) {
+
+  if (!head) return;
+
+  Node *sum = head;
+  while (sum->next) {
+    Node *next = sum->next;
+    if (sum->val * next->val < 0) {
+      sum = next;
+      next = sum->next;
+    }
+    if (next) {
+      sum->val += next->val;
+      sum->next = next->next;
+    }
+
+  }
+
+}
+
+
 int main() {
   Node *head = LL_read();
+  group(head);
   LL_print(head);
+
   return 0;
 }

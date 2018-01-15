@@ -2,19 +2,23 @@
 #include <stdlib.h>
 
 
-typedef struct b_node {
+typedef struct Node_t {
+  struct Node_t *left;
+  struct Node_t *right;
   int val;
-  struct b_node *left;
-  struct b_node *right;
-} Vert;
+} Node;
 
 
-Vert *Vert_new(int val, Vert *left, Vert *right) {
-  Vert *v = malloc(sizeof(Vert));
-  v -> val = val;
-  v -> left = left;
-  v -> right = right;
-  return v;
+Node *NN(int val, Node *left, Node *right){
+  Node *n = malloc(sizeof(Node));
+  n -> val = val;
+  n -> left = left;
+  n -> right = right;
+  return n;
+}
+
+Node *LN(int val){
+  return NN(val, NULL, NULL);
 }
 
 int main() {

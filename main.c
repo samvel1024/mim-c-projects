@@ -56,13 +56,16 @@ Node *first_common(Node *a, Node *b) {
     if (a == b)
       return a;
 
-    if (len1 >= len2) {
+    if (len1 > len2) {
       a = a->next;
       len1--;
     }
-    if (len1 <= len2) {
+    else if (len1 < len2) {
       b = b->next;
       len2--;
+    }else {
+      a = a->next;
+      b = b->next;
     }
   }
 

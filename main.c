@@ -60,7 +60,7 @@ Node *replace_add(Node *head) {
     head = head->next;
   }
 
-  if (head && head->val > 0) {
+  if (head && head->val > 1) {
     head = link_ones_to(head->next, head->val);
   }
 

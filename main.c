@@ -38,8 +38,36 @@ Node *LL_read() {
   return head;
 }
 
-int main() {
-  Node *head = LL_read();
-  LL_print(head);
-  return 0;
+int len(Node *a) {
+  int len = 0;
+  while (a) {
+    ++len;
+    a = a->next;
+  }
+  return len;
 }
+
+
+Node *first_common(Node *a, Node *b) {
+  int len1 = len(a);
+  int len2 = len(b);
+
+  while (a && b) {
+    if (a == b)
+      return a;
+
+    if (len1 >= len2) {
+      a = a->next;
+      len1--;
+    }
+    if (len1 <= len2) {
+      b = b->next;
+      len2--;
+    }
+  }
+
+  return NULL;
+
+}
+
+

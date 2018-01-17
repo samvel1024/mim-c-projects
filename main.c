@@ -16,58 +16,47 @@ typedef struct heap_t {
 } Heap;
 
 
-int Heap_right(int curr) {
-  return (curr + 1) * 2;
+int Heap_extract(Heap *self, int parent){
+
 }
 
-int Heap_left(int curr) {
-  return (curr + 1) * 2 - 1;
-}
+void Heap_heapify(Heap *self, int parent) {
 
+  int left = parent * 2 + 1;
+  int right = left + 1;
 
-void Heap_max_heapify(Heap *self, int parent) {
+  int *arr = self->arr;
 
-  int *heap = self->arr;
-  int left = Heap_left(parent);
-  int right = Heap_right(parent);
-  int max = parent;
-  if (heap[left] > heap[parent])
-    max = left;
-  if (heap[right] > heap[max])
-    max = right;
+  int largest = parent;
+  if (left < self->size && arr[left] > arr[largest])
+    largest = left;
+  if (right < self->size && arr[right] > arr[largest])
+    largest = right;
 
-  if (max != parent) {
-    swap(&heap[max], &heap[parent]);
-    Heap_max_heapify(self, max);
+  if (largest != parent) {
+    swap(&arr[largest], &arr[parent]);
+    Heap_heapify(self, largest);
   }
+
 }
 
-void Heap_build(Heap *self) {
-  for (int i = self->size / 2; i >= 0; ++i) {
-    Heap_max_heapify(self, i);
-  }
-}
-
-Heap *Heap_new(int arr[], int size) {
+void Heap_init(int arr[], int size) {
   Heap *h = malloc(sizeof(Heap));
   h->arr = arr;
   h->size = size;
-  return h;
+
+  for (int i = size / 2; i >= 0; --i) {
+    Heap_heapify(h, i);
+  }
+
 }
 
 
+void Heap_add(Heap *self, int parent) {
+
+}
 
 
 int main() {
-  int size;
-  scanf("%d", &size);
-  int arr[size];
-  for (int i = 0; i < size; ++i) {
-    scanf("%d", &arr[i]);
-  }
-  Heap *h = Heap_new(arr, size);
-  for (int i = 0; i < size; ++i) {
-    printf("%d ", arr[i]);
-  }
-  return 0;
+
 }

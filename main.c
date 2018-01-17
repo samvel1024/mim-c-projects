@@ -21,6 +21,7 @@ void LL_print(Node *head) {
     printf("%d ", head->val);
     head = head->next;
   } while (head != NULL);
+  printf("\n");
 }
 
 
@@ -38,8 +39,43 @@ Node *LL_read() {
   return head;
 }
 
+void split(Node *head, int len, Node *heads[]) {
+  Node *end = head;
+  Node *start = head;
+
+  for (int i = 0; i < len && end; ++i) {
+    heads[i] = end;
+    end = end->next;
+  }
+
+  while (end) {
+    Node *start_next = start->next;
+    start->next = end;
+    end = end->next;
+    start = start_next;
+  }
+
+  while(start){
+    Node *sn = start -> next;
+    start -> next = NULL;
+    start = sn;
+  }
+
+}
+
+
 int main() {
-  Node *head = LL_read();
-  LL_print(head);
+  int list_len, partitions;
+  scanf("%d %d", &list_len, &partitions);
+  Node *list = Node_new(list_len, NULL);
+  for (int i=1 ;i<list_len; ++i){
+    list = Node_new(list -> val-1, list);
+  }
+
+  Node **parts = calloc((size_t) partitions, sizeof(Node*));
+  split(list, partitions, parts);
+
+  for (int i=0; i<partitions; ++i)
+    LL_print(parts[i]);
   return 0;
 }

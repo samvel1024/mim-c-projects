@@ -41,7 +41,8 @@ Node *LL_read() {
 
 
 Node *extract_min(Node **first, Node **second) {
-  Node ***min_ptr = *first == NULL ? &second : *second == NULL ? &first : (*first)->val <= (*second)->val ? &first : &second;
+  Node ***min_ptr =
+    *first == NULL ? &second : *second == NULL ? &first : (*first)->val <= (*second)->val ? &first : &second;
   Node *ans = **min_ptr;
   (**min_ptr) = (**min_ptr)->next;
   return ans;
@@ -51,9 +52,19 @@ Node *merge(Node *first, Node *second) {
   Node *head = (first->val <= second->val) ? first : second;
   Node *curr = head;
   while (first || second) {
-    curr->next = extract_min(&first, &second);
-    curr = curr->next;
+    Node *next_min = extract_min(&first, &second);
+    if (curr->val != next_min->val) {
+      curr -> next = next_min;
+      curr = curr->next;
+    }
   }
+
+  while(curr){
+    if (curr -> val == curr -> next -> val)
+      curr -> next = NULL;
+    curr = curr -> next;
+  }
+
   return head;
 }
 

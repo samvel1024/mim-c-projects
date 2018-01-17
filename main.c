@@ -39,24 +39,28 @@ Node *LL_read() {
   return head;
 }
 
-Node *LL_reverse(Node *head) {
-  if (head == NULL) return NULL;
-  Node *prev = head;
-  Node *curr = head->next;
-  while (curr != NULL) {
-    Node *temp_next = curr -> next;
-    curr->next = prev;
-    prev = curr;
-    curr = temp_next;
+
+Node *reverse_rec(Node *node, Node **new_head) {
+  if (!node->next) {
+    *new_head = node;
+    return node;
   }
-  head->next = NULL;
-  return prev;
+  Node *rev = reverse_rec(node->next, new_head);
+  rev->next = node;
+  return node;
+}
+
+Node *reverse(Node *node) {
+  if (!node) return NULL;
+  Node *nhead = NULL;
+  reverse_rec(node, &nhead);
+  node->next = NULL;
+  return nhead;
 }
 
 
 int main() {
   Node *head = LL_read();
-  head = LL_reverse(head);
-  LL_print(head);
+  LL_print(reverse(head));
   return 0;
 }

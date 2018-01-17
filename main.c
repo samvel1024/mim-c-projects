@@ -21,6 +21,7 @@ void LL_print(Node *head) {
     printf("%d ", head->val);
     head = head->next;
   } while (head != NULL);
+  printf("\n");
 }
 
 
@@ -38,31 +39,28 @@ Node *LL_read() {
   return head;
 }
 
-Node **LL_min(Node **one, Node **two) {
-  if (*one == NULL)
-    return two;
-  if (*two == NULL)
-    return one;
-  return (*one)->val < (*two)->val ? one : two;
+
+Node *extract_min(Node **first, Node **second) {
+  Node ***min_ptr = *first == NULL ? &second : *second == NULL ? &first : (*first)->val <= (*second)->val ? &first : &second;
+  Node *ans = **min_ptr;
+  (**min_ptr) = (**min_ptr)->next;
+  return ans;
 }
 
-Node *LL_merge(Node **one, Node **two) {
-  Node **head = LL_min(one, two);
-  Node **prev_min = head;
-  (*prev_min) -> next = *head;
-  while((*one) -> next != NULL && (*two) -> next != NULL){
-    Node **min = LL_min(one, two);
-    printf("%d ", (*min) -> val);
-    (*prev_min) -> next = *min;
-    (*min) = (*min) -> next;
+Node *merge(Node *first, Node *second) {
+  Node *head = (first->val <= second->val) ? first : second;
+  Node *curr = head;
+  while (first || second) {
+    curr->next = extract_min(&first, &second);
+    curr = curr->next;
   }
-  return *head;
+  return head;
 }
 
 int main() {
   Node *first = LL_read();
   Node *second = LL_read();
-  Node *merged = LL_merge(&first, &second);
+  Node *merged = merge(first, second);
   LL_print(merged);
   return 0;
 }

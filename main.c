@@ -38,8 +38,28 @@ Node *LL_read() {
   return head;
 }
 
+
+Node *reverse(Node *head){
+  if (!head) return NULL;
+
+  Node *prev = head;
+  Node *curr = head -> next;
+  while(curr){
+    Node *next = curr -> next;
+    curr -> next = prev;
+
+    prev = curr;
+    curr = next;
+  }
+
+  head -> next = NULL;
+  return prev;
+
+}
+
+
 int main() {
   Node *head = LL_read();
-  LL_print(head);
+  LL_print(reverse(head));
   return 0;
 }

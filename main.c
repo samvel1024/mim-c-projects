@@ -24,9 +24,10 @@ void LL_print(Node *head) {
 }
 
 
-Node *LL_read() {
+Node *LL_read(int *s) {
   int size = 0;
   scanf("%d", &size);
+  *s = size;
   Node *head = NULL;
   Node **curr = &head;
   while (size--) {
@@ -38,8 +39,32 @@ Node *LL_read() {
   return head;
 }
 
+
+void link(Node *curr, Node **head) {
+  if (curr == NULL) {
+    return;
+  }
+  link(curr->next, head);
+  Node *hn = (*head)->next;
+  (*head)->next = curr;
+  (*head) = hn;
+}
+
+
 int main() {
-  Node *head = LL_read();
-  LL_print(head);
+  int size;
+  Node *head = LL_read(&size);
+  size = (size + 1)/2;
+  Node *arr[size];
+  Node *curr = head;
+  for (int i = 0; i < size; ++i) {
+    arr[i] = curr;
+    curr = curr->next;
+  }
+  link(head, &head);
+  for (int i = 0; i < size; ++i) {
+    printf("%d %d\n", arr[i]->val, arr[i]->next->val);
+  }
+
   return 0;
 }

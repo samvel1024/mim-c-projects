@@ -22,6 +22,7 @@ void LL_print(Node *head) {
     printf("%d ", head->val);
     head = head->next;
   } while (head != NULL);
+  printf("\n");
 }
 
 
@@ -39,24 +40,24 @@ Node *LL_read() {
   return head;
 }
 
-bool is_cyclic(Node *head) {
-
-  Node *slow, *fast;
-  slow = fast = head;
-
-
-  while (slow && fast) {
-    slow = slow->next;
-    fast = (fast->next) ? fast->next->next : NULL;
-
-    if (slow == fast && slow != NULL)
-      return true;
-    if (slow == NULL || fast == NULL)
-      return false;
+Node *LL_reverse(Node *head) {
+  if (!head) return NULL;
+  Node *prev = head;
+  Node *curr = head->next;
+  head -> next = NULL;
+  while (curr) {
+    Node *temp_next = curr->next;
+    curr->next = prev;
+    prev = curr;
+    curr = temp_next;
   }
+  return prev;
+}
 
-  return false;
 
+bool is_cyclic(Node *head) {
+  Node *reversed = LL_reverse(head);
+  return head == reversed;
 }
 
 
@@ -66,7 +67,7 @@ int main() {
   Node *cycle_head = Node_new(4, NULL);
   Node *cyclic = Node_new(1, Node_new(2, Node_new(3, cycle_head)));
   Node *cycle = Node_new(5, Node_new(6, Node_new(7, Node_new(8, cycle_head))));
-  cycle_head -> next = cycle;
+  cycle_head->next = cycle;
 
   printf("%d %d", is_cyclic(flat), is_cyclic(cyclic));
 

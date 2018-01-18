@@ -45,12 +45,15 @@ Node *LL_reverse(Node *head) {
   Node *prev = head;
   Node *curr = head->next;
   head -> next = NULL;
+  int iter = 0;
   while (curr) {
+    ++iter;
     Node *temp_next = curr->next;
     curr->next = prev;
     prev = curr;
     curr = temp_next;
   }
+  printf("%d\n", iter);
   return prev;
 }
 

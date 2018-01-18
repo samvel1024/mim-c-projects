@@ -53,7 +53,7 @@ Node *LL_read() {
 }
 
 Node *extract_min(Node **first, Node **second) {
-  Node ***min_ptr = (!first) ? &second : (!second) ? &first :
+  Node ***min_ptr = (*first == NULL) ? &second : (*second == NULL ) ? &first :
                                          (*first)->val < (*second)->val ? &first : &second;
   Node *ret_val = **min_ptr;
   (**min_ptr) = (**min_ptr)->next;
@@ -71,11 +71,11 @@ Node *merge(LLNode *ll) {
 
     Node *first = firstLL->ll;
     Node *second = secondLL->ll;
-    Node *curr = first;
+    Node *curr = (first->val < second->val) ? first : second;
     while (first || second) {
       Node *min = extract_min(&first, &second);
-      curr -> next = min;
-      curr = curr -> next;
+      curr->next = min;
+      curr = curr->next;
     }
 
     secondLL = secondLL->next;
@@ -89,15 +89,12 @@ Node *merge(LLNode *ll) {
 
 
 int main() {
-  Node *head = LL_read();
-  LL_print(head);
-
   Node *n1 = N(1, N(4, N(6, N(10, NULL))));
   Node *n2 = N(20, N(123, N(123, N(123, NULL))));
   Node *n3 = N(-5, N(9, N(-2, NULL)));
   Node *n4 = N(50, N(92, N(45, N(6, N(89, N(12, NULL))))));
   LLNode *ln = LLN(n1, LLN(n2, LLN(n3, LLN(n4, NULL))));
-  Node *merged  = merge(ln);
+  Node *merged = merge(ln);
   LL_print(merged);
   return 0;
 }

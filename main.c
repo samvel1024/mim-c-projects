@@ -38,6 +38,7 @@ Node *remove_negative(Node *l) {
       curr->next = curr->next->next;
     else curr = curr->next;
   }
+  free(fake);
   return fake -> next;
 }
 

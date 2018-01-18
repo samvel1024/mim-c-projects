@@ -56,14 +56,10 @@ Node *merge(Node *first, Node *second) {
     if (curr->val != next_min->val) {
       curr -> next = next_min;
       curr = curr->next;
+      curr -> next = NULL;
     }
   }
 
-  while(curr){
-    if (curr -> val == curr -> next -> val)
-      curr -> next = NULL;
-    curr = curr -> next;
-  }
 
   return head;
 }

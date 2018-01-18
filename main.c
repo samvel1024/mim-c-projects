@@ -16,26 +16,27 @@ Node *Node_new(int val, Node *next) {
 
 
 void LL_print(Node *head) {
-  if (head == NULL) return;
-  do {
+  if (!head) return;
+  while (head) {
     printf("%d ", head->val);
     head = head->next;
-  } while (head != NULL);
+  }
+  printf("\n");
 }
 
 
 Node *LL_read() {
   int size = 0;
   scanf("%d", &size);
-  Node *head = NULL;
-  Node **curr = &head;
+  Node *fake = Node_new(1, NULL);
+  Node *curr = fake;
   while (size--) {
     int val;
     scanf("%d", &val);
-    *curr = Node_new(val, NULL);
-    curr = &((*curr)->next);
+    curr->next = Node_new(val, NULL);
+    curr = curr->next;
   }
-  return head;
+  return fake -> next;
 }
 
 int main() {

@@ -39,7 +39,29 @@ Node *LL_read() {
   return head;
 }
 
-bool is_cyclic(Node *head) {
+int cycle_len(Node *meet_node){
+  Node *curr = meet_node->next;
+  int len = 0;
+  while(curr != meet_node) {
+    curr = curr->next;
+    ++len;
+  }
+  return len;
+}
+
+
+
+int tail_len(Node *meet_node, Node *head){
+  int len = 0;
+  while(meet_node != head){
+    len++;
+    meet_node = meet_node -> next;
+    head = head -> next;
+  }
+  return len+1;
+}
+
+int cyclic_len(Node *head) {
 
   Node *slow, *fast;
   slow = fast = head;
@@ -48,12 +70,13 @@ bool is_cyclic(Node *head) {
   while (slow && fast) {
     slow = slow->next;
     fast = (fast->next) ? fast->next->next : NULL;
-
-    if (slow == fast && slow != NULL)
-      return true;
+    if (slow == fast && slow != NULL) {
+      return tail_len(slow, head) + cycle_len(slow);
+    }
     if (slow == NULL || fast == NULL)
       return false;
   }
+
 
   return false;
 
@@ -68,7 +91,7 @@ int main() {
   Node *cycle = Node_new(5, Node_new(6, Node_new(7, Node_new(8, cycle_head))));
   cycle_head -> next = cycle;
 
-  printf("%d %d", is_cyclic(flat), is_cyclic(cyclic));
+  printf("%d", cyclic_len(cyclic));
 
 
   return 0;

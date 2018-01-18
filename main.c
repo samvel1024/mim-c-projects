@@ -31,17 +31,14 @@ Node *LL_read() {
 
 
 Node *remove_negative(Node *l) {
-  Node *head = l;
-  while (head != NULL && head->val < 0) {
-    head = head->next;
-  }
-  Node *curr = head;
-  while (curr != NULL) {
-    if (curr->next != NULL && curr->next->val < 0)
+  Node *fake = Node_new(1, l);
+  Node *curr = fake;
+  while (curr) {
+    if (curr->next && curr->next->val < 0)
       curr->next = curr->next->next;
     else curr = curr->next;
   }
-  return head;
+  return fake -> next;
 }
 
 int main() {

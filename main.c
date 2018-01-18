@@ -91,8 +91,8 @@ Node *merge(LLNode *ll) {
 int main() {
   Node *n1 = N(1, N(4, N(6, N(10, NULL))));
   Node *n2 = N(20, N(123, N(123, N(123, NULL))));
-  Node *n3 = N(-5, N(9, N(-2, NULL)));
-  Node *n4 = N(50, N(92, N(45, N(6, N(89, N(12, NULL))))));
+  Node *n3 = N(-5, N(9, N(23, NULL)));
+  Node *n4 = N(50, N(322, N(435, N(645, N(819, N(1212, NULL))))));
   LLNode *ln = LLN(n1, LLN(n2, LLN(n3, LLN(n4, NULL))));
   Node *merged = merge(ln);
   LL_print(merged);

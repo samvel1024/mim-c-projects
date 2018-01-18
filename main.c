@@ -59,11 +59,10 @@ Node *first_common(Node *a, Node *b) {
     if (len1 > len2) {
       a = a->next;
       len1--;
-    }
-    else if (len1 < len2) {
+    } else if (len1 < len2) {
       b = b->next;
       len2--;
-    }else {
+    } else {
       a = a->next;
       b = b->next;
     }
@@ -73,4 +72,19 @@ Node *first_common(Node *a, Node *b) {
 
 }
 
+
+int main() {
+  Node *common = Node_new(1, Node_new(2, Node_new(3, Node_new(4, NULL))));
+  Node *l1 = Node_new(1, Node_new(2, common));
+  Node *l2 = Node_new(0, Node_new(1, Node_new(2, common)));
+
+  printf("%d ", first_common(l1, l2) == common);
+
+  Node *a1 = Node_new(1, Node_new(2, Node_new(3, NULL)));
+  Node *a2 = Node_new(1, Node_new(2, Node_new(3, Node_new(4, NULL))));
+
+  printf("%d", first_common(a1, a2) == NULL);
+
+  return 0;
+}
 

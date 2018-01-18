@@ -56,15 +56,9 @@ Node *link_ones_to(Node *next, int count) {
 
 
 Node *replace_add(Node *head) {
-  while (head && head->val < 0) {
-    head = head->next;
-  }
 
-  if (head && head->val > 1) {
-    head = link_ones_to(head->next, head->val);
-  }
-
-  Node *prev = head;
+  Node *fake_head = Node_new(0, head);
+  Node *prev = fake_head;
   Node *curr = head;
 
   while (curr) {
@@ -82,7 +76,8 @@ Node *replace_add(Node *head) {
     }
 
   }
-  return head;
+
+  return fake_head->next;
 }
 
 int main() {

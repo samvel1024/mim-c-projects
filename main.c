@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 
 typedef struct node_t {
@@ -36,11 +37,28 @@ Node *LL_read() {
     curr->next = Node_new(val, NULL);
     curr = curr->next;
   }
-  return fake -> next;
+  return fake->next;
+}
+
+
+void solve(Node *curr, Node **head, bool *ans) {
+  if (!curr) return;
+
+  solve(curr->next, head, ans);
+
+  if ((*head)->val != curr->val)
+    *ans = false;
+  (*head) = (*head)->next;
+}
+
+bool is_poly(Node *l) {
+  bool ans = true;
+  solve(l, &l, &ans);
+  return ans;
 }
 
 int main() {
   Node *head = LL_read();
-  LL_print(head);
+  printf("%d", is_poly(head));
   return 0;
 }

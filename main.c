@@ -43,15 +43,13 @@ Node *LL_read() {
 
 void solve(Node *curr, Node **head, bool *ans) {
   if (!curr) return;
-
   solve(curr->next, head, ans);
-
   if ((*head)->val != curr->val)
     *ans = false;
   (*head) = (*head)->next;
 }
 
-bool is_poly(Node *l) {
+bool is_palindrome(Node *l) {
   bool ans = true;
   solve(l, &l, &ans);
   return ans;
@@ -59,6 +57,6 @@ bool is_poly(Node *l) {
 
 int main() {
   Node *head = LL_read();
-  printf("%d", is_poly(head));
+  printf("%d", is_palindrome(head));
   return 0;
 }

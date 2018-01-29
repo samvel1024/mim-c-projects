@@ -21,6 +21,14 @@ Node *LN(int val){
   return NN(val, NULL, NULL);
 }
 
+
+Node *build_childre(int from){
+  int val, pos;
+  scanf("%d")
+}
+
+
+
 int main() {
   int i;
   scanf("%d", &i);

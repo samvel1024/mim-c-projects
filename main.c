@@ -1,8 +1,6 @@
-#include <stdio.h>
+#include "tree.h"
 
-int main(){
-    int i;
-    scanf("%d", &i);
-    printf("%d\n", 2*i);
-    return 0;
+int main() {
+  print();
+  return 0;
 }

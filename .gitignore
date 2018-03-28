@@ -1,4 +1,8 @@
-cmake-build-debug
-exec
-.idea
-_temp.out
+*
+
+!.gitignore
+!./tests
+!CmakeLists.txt
+!main.c
+!tree.c
+!tree.h

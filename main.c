@@ -31,8 +31,8 @@ void LinkedList_remove_node(LinkedList *self, ListNode *node) {
   if (node->prev)
     node->prev->next = node->next;
 
-  free(node);
   free(node -> val);
+  free(node);
 }
 
 
@@ -75,6 +75,7 @@ void TEST_linkedListImpl() {
   LinkedList_remove_node(ll, node);
   assert(ll->head == NULL);
   assert(ll->tail == NULL);
+  free(ll);
 }
 
 int main() {

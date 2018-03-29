@@ -8,7 +8,7 @@ void LinkedList_remove_node(struct LinkedList *self, struct ListNode *node);
 
 struct ListNode *LinkedList_push_tail(struct LinkedList *self, void *val);
 
-struct ListNode *LinkedList_push_tail_int(struct LinkedList *self, int val);
+struct ListNode *LinkedList_insert_sorted(struct LinkedList *self, int val);
 
 struct ListNode *LinkedList_concat(struct LinkedList *self, struct LinkedList *merged);
 
@@ -19,6 +19,27 @@ typedef struct ListNode {
 	struct ListNode *next;
 } ListNode;
 
+ListNode *ListNode_new(void *val) {
+	ListNode *l = malloc(sizeof(ListNode));
+	l->val = val;
+	l->prev = l->next = NULL;
+	return l;
+}
+
+ListNode *ListNode_add_after(ListNode *self, ListNode *new_node) {
+	ListNode *next = self->next;
+	next->prev = new_node;
+	new_node->next = next;
+	new_node->prev = self;
+	self->next = new_node;
+	return new_node;
+}
+
+int ListNode_as_int(ListNode *self) {
+	return *((int *) self->val);
+}
+
+
 typedef struct LinkedList {
 	ListNode *head;
 	ListNode *tail;
@@ -26,16 +47,18 @@ typedef struct LinkedList {
 
 LinkedList *LinkedList_new() {
 	LinkedList *ll = malloc(sizeof(LinkedList));
-	ll->head = NULL;
-	ll->tail = NULL;
+	ll->head = ListNode_new(NULL);
+	ll->tail = ListNode_new(NULL);
+	ll->head->next = ll->tail;
+	ll->tail->prev = ll->head;
 	return ll;
 }
 
-void *LinkedList_deep_free(LinkedList *self){
+void *LinkedList_deep_free(LinkedList *self) {
 	ListNode *curr = self->head;
-	while(curr){
+	while (curr) {
 		ListNode *next = curr->next;
-		free(curr -> val);
+		free(curr->val);
 		free(curr);
 		curr = next;
 	}
@@ -43,46 +66,49 @@ void *LinkedList_deep_free(LinkedList *self){
 }
 
 void LinkedList_remove_node(LinkedList *self, ListNode *node) {
-	if (node == self->head)
-		self->head = node->next;
-	if (node == self->tail)
-		self->tail = node->prev;
-
-	if (node->next)
-		node->next->prev = node->prev;
-	if (node->prev)
-		node->prev->next = node->next;
-
+	if (node == self->head || node == self->tail) {
+		printf("Error: attempt to remove sentinel nodes");
+		exit(1);
+	}
+	node->prev->next = node->next;
+	node->next->prev = node->prev;
 	free(node->val);
 	free(node);
 }
 
-
-ListNode *LinkedList_push_tail(LinkedList *self, void *val) {
-	ListNode *new_node = malloc(sizeof(ListNode));
-	new_node->val = val;
-	new_node->next = NULL;
-
-	if (self->tail == NULL) {
-		self->head = new_node;
-		self->tail = new_node;
-		new_node->prev = NULL;
-	} else {
-		new_node->prev = self->tail;
-		self->tail->next = new_node;
-	}
-	return new_node;
+boolean LinkedList_is_empty(LinkedList *self) {
+	return self->head->next == self->tail;
 }
 
-ListNode *LinkedList_push_tail_int(LinkedList *self, int val) {
+
+ListNode *LinkedList_push_tail(LinkedList *self, void *val) {
+	ListNode *new_node = ListNode_new(val);
+	return ListNode_add_after(self->tail->prev, new_node);
+}
+
+ListNode *LinkedList_insert_sorted_desc(LinkedList *self, int val) {
 	int *ptr = malloc(sizeof(int));
 	*ptr = val;
-	return LinkedList_push_tail(self, ptr);
+	ListNode *new_node = ListNode_new(ptr);
+	ListNode *curr = self->head;
+
+	while (curr->next != self->tail) {
+		int curr_val = ListNode_as_int(curr->next);
+		if (curr_val < val)
+			break;
+		curr = curr->next;
+	}
+
+	return ListNode_add_after(curr, new_node);
+
+
 }
 
 ListNode *LinkedList_concat(LinkedList *self, LinkedList *merged) {
-	self->tail->next = merged->head;
-	self->tail = merged->tail;
+	self->tail->prev->next = merged->head->next;
+	merged->head->next->prev = self->tail->prev;
+	free(self->tail);
+	free(merged->head);
 }
 
 
@@ -90,7 +116,7 @@ void TEST_linkedListImpl() {
 	LinkedList *ll = LinkedList_new();
 	assert(ll->head == NULL);
 	assert(ll->tail == NULL);
-	ListNode *node = LinkedList_push_tail_int(ll, 1);
+	ListNode *node = LinkedList_insert_sorted(ll, 1);
 	assert(ll->head == ll->tail);
 	assert((*(int *) (ll->head->val)) == 1);
 	assert(ll->head != NULL);
@@ -144,7 +170,7 @@ Tree *Tree_new() {
 TreeNode *add_node(struct Tree *self, int parent_id, int id) {
 	if (parent_id < 0 || parent_id > NODE_LOOKUP_SIZE || self->node_lookup[parent_id] == NULL)
 		return NULL;
-	if (id < 0 || id > NODE_LOOKUP_SIZE)
+	if (id < 0 || id > NODE_LOOKUP_SIZE || self->node_lookup[id] != NULL)
 		return NULL;
 
 	TreeNode *parent = self->node_lookup[parent_id];

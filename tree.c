@@ -223,8 +223,32 @@ bool Tree_remove_node(struct Tree *self, int rem_id) {
 	free(node->in_parent);
 	LinkedList_shallow_free(node->children);
 	LinkedList_deep_free(node->items, NULL);
-	self->node_lookup[rem_id] = NULL;
 	free(node);
+	self->node_lookup[rem_id] = NULL;
+	return true;
+}
+
+bool Tree_add_item(Tree *self, int node_id, int item) {
+	if (!Tree_exists_node(self, node_id))
+		return false;
+	TreeNode *t = Tree_get(self, node_id);
+	LinkedList_insert_sorted_desc(t->items, item);
+	return true;
+}
+
+bool Tree_remove_item(Tree *self, int node_id, int item) {
+	if (!Tree_exists_node(self, node_id))
+		return false;
+	TreeNode *node = Tree_get(self, node_id);
+	ListNode *rem = node->items->head->next;
+	while (rem != node->items->tail) {
+		int val = ListNode_as_int(rem);
+		if (val == item) {
+			ListNode_remove(rem);
+			free(rem->val);
+			free(rem);
+		}
+	}
 	return true;
 }
 
@@ -241,6 +265,16 @@ void TEST_treeRemoveAndInsert() {
 	assert(Tree_add_node(t, 3, 7));
 	assert(Tree_add_node(t, 4, 8));
 	assert(Tree_add_node(t, 4, 9));
+
+	assert(Tree_add_item(t, 0, 3));
+	assert(Tree_add_item(t, 0, 1));
+	assert(Tree_add_item(t, 0, 2));
+	assert(Tree_add_item(t, 1, 6));
+	assert(Tree_add_item(t, 1, 7));
+	assert(Tree_add_item(t, 1, 9));
+	assert(Tree_add_item(t, 1, 10));
+	assert(Tree_add_item(t, 10, 11));
+	assert(Tree_add_item(t, 10, 12));
 
 	assert(Tree_remove_node(t, 1));
 	assert(Tree_remove_node(t, 2));
@@ -262,7 +296,7 @@ void TEST_treeRemoveAndInsert() {
 }
 
 int main() {
-	//TEST_linkedListImpl();
+	TEST_linkedListImpl();
 	TEST_treeRemoveAndInsert();
 	return 0;
 }

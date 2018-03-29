@@ -139,6 +139,7 @@ void TEST_linkedListImpl() {
 	LinkedList_insert_sorted_desc(ll, 1);
 	int order[] = {2, 1, 0};
 	assert(LinkedList_equal(ll, order));
+	LinkedList_deep_free(ll, NULL);
 }
 
 

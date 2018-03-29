@@ -233,11 +233,13 @@ void TEST_treeRemoveAndInsert() {
 	assert(Tree_add_node(t, 0, 1));
 	assert(Tree_add_node(t, 0, 2));
 	assert(Tree_add_node(t, 0, 3));
+	assert(Tree_add_node(t, 0, 10));
 	assert(Tree_add_node(t, 1, 4));
 	assert(Tree_add_node(t, 1, 5));
 	assert(Tree_add_node(t, 2, 6));
 	assert(Tree_add_node(t, 3, 7));
 	assert(Tree_add_node(t, 4, 8));
+	assert(Tree_add_node(t, 4, 9));
 
 	assert(Tree_remove_node(t, 1));
 	assert(Tree_remove_node(t, 2));
@@ -247,15 +249,19 @@ void TEST_treeRemoveAndInsert() {
 	assert(Tree_remove_node(t, 6));
 	assert(Tree_remove_node(t, 7));
 	assert(Tree_remove_node(t, 8));
+	assert(Tree_remove_node(t, 9));
+	assert(Tree_remove_node(t, 10));
 
 	assert(LinkedList_is_empty(t->root->children));
 	LinkedList_shallow_free(t->root->children);
 	LinkedList_shallow_free(t->root->items);
 	free(t->root);
+	free(t->node_lookup);
+	free(t);
 }
 
 int main() {
-	TEST_linkedListImpl();
+	//TEST_linkedListImpl();
 	TEST_treeRemoveAndInsert();
 	return 0;
 }

@@ -1,8 +1,7 @@
 #ifndef TREE_H
 #define TREE_H
 
-
-#include <jmorecfg.h>
+#include <stdbool.h>
 
 struct LinkedList;
 struct ListNode;
@@ -12,8 +11,8 @@ struct TreeNode;
 
 struct Tree *Tree_new();
 
-struct TreeNode *add_node(struct Tree *self, int parent_id, int id);
+struct TreeNode *Tree_add_node(struct Tree *self, int parent_id, int id);
 
-boolean remove_node(struct Tree *self, int node);
+bool Tree_remove_node(struct Tree *self, int node);
 
 #endif

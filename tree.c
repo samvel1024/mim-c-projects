@@ -4,18 +4,8 @@
 #include <stdbool.h>
 #include "tree.h"
 
-#define assert__(x) for ( ; !(x) ; assert(x) )
-
 
 /********************* Doubly Linked List *******************************/
-void LinkedList_remove_node(struct LinkedList *self, struct ListNode *node, void (*destruct)(void *));
-
-struct ListNode *LinkedList_push_tail(struct LinkedList *self, void *val);
-
-struct ListNode *LinkedList_insert_sorted_desc(struct LinkedList *self, int val);
-
-void LinkedList_concat(struct LinkedList *self, struct LinkedList *merged);
-
 
 typedef struct ListNode {
 	void *val;
@@ -30,13 +20,17 @@ ListNode *ListNode_new(void *val) {
 	return l;
 }
 
-ListNode *ListNode_add_after(ListNode *self, ListNode *new_node) {
+void ListNode_add_after(ListNode *self, ListNode *new_head, ListNode *new_tail) {
 	ListNode *next = self->next;
-	next->prev = new_node;
-	new_node->next = next;
-	new_node->prev = self;
-	self->next = new_node;
-	return new_node;
+	next->prev = new_tail;
+	new_tail->next = next;
+	new_head->prev = self;
+	self->next = new_head;
+}
+
+void ListNode_remove(ListNode *self) {
+	self->prev->next = self->next;
+	self->next->prev = self->prev;
 }
 
 int ListNode_as_int(ListNode *self) {
@@ -56,6 +50,12 @@ LinkedList *LinkedList_new() {
 	ll->head->next = ll->tail;
 	ll->tail->prev = ll->head;
 	return ll;
+}
+
+void LinkedList_shallow_free(LinkedList *self) {
+	free(self->head);
+	free(self->tail);
+	free(self);
 }
 
 void LinkedList_deep_free(LinkedList *self, void (*destruct)(void *)) {
@@ -86,14 +86,15 @@ void LinkedList_remove_node(LinkedList *self, ListNode *node, void (*destruct)(v
 	free(node);
 }
 
-boolean LinkedList_is_empty(LinkedList *self) {
+bool LinkedList_is_empty(LinkedList *self) {
 	return self->head->next == self->tail;
 }
 
 
 ListNode *LinkedList_push_tail(LinkedList *self, void *val) {
 	ListNode *new_node = ListNode_new(val);
-	return ListNode_add_after(self->tail->prev, new_node);
+	ListNode_add_after(self->tail->prev, new_node, new_node);
+	return new_node;
 }
 
 ListNode *LinkedList_insert_sorted_desc(LinkedList *self, int val) {
@@ -109,7 +110,8 @@ ListNode *LinkedList_insert_sorted_desc(LinkedList *self, int val) {
 		curr = curr->next;
 	}
 
-	return ListNode_add_after(curr, new_node);
+	ListNode_add_after(curr, new_node, new_node);
+	return new_node;
 }
 
 void LinkedList_concat(LinkedList *self, LinkedList *merged) {
@@ -172,7 +174,7 @@ void TreeNode_add_child(TreeNode *parent, TreeNode *child) {
 
 typedef struct Tree {
 	TreeNode *root;
-	TreeNode *node_lookup[NODE_LOOKUP_SIZE];
+	TreeNode **node_lookup;
 } Tree;
 
 
@@ -180,25 +182,80 @@ Tree *Tree_new() {
 	Tree *t = malloc(sizeof(Tree));
 	TreeNode *root = TreeNode_new(0);
 	t->root = root;
-	//TODO init lookup array
+	t->node_lookup = calloc(sizeof(TreeNode *), NODE_LOOKUP_SIZE);
+	t->node_lookup[0] = root;
 	return t;
 }
 
-TreeNode *add_node(struct Tree *self, int parent_id, int id) {
-	if (parent_id < 0 || parent_id > NODE_LOOKUP_SIZE || self->node_lookup[parent_id] == NULL)
-		return NULL;
-	if (id < 0 || id > NODE_LOOKUP_SIZE || self->node_lookup[id] != NULL)
-		return NULL;
+bool Tree_valid_index(int i) {
+	return (i >= 0 && i <= NODE_LOOKUP_SIZE);
+}
 
-	TreeNode *parent = self->node_lookup[parent_id];
+bool Tree_exists_node(Tree *self, int id) {
+	return Tree_valid_index(id) && self->node_lookup[id] != NULL;
+}
+
+TreeNode *Tree_get(Tree *self, int id) {
+	return self->node_lookup[id];
+}
+
+TreeNode *Tree_add_node(struct Tree *self, int parent_id, int id) {
+	if (!Tree_exists_node(self, parent_id) || Tree_exists_node(self, id)) return false;
+
+	TreeNode *parent = Tree_get(self, parent_id);
 	TreeNode *child = TreeNode_new(id);
 	TreeNode_add_child(parent, child);
 
 	return child;
 }
 
+bool Tree_remove_node(struct Tree *self, int rem_id) {
+	if (!Tree_exists_node(self, rem_id)) return false;
+	if (rem_id == 0) return false;
+	TreeNode *node = Tree_get(self, rem_id);
+	if (node == NULL) return false;
+
+	if (!LinkedList_is_empty(node->children)) {
+		ListNode_add_after(node->in_parent, node->children->head->next, node->children->tail->prev);
+		ListNode_remove(node->in_parent);
+	}
+	LinkedList_shallow_free(node->children);
+	LinkedList_deep_free(node->items, NULL);
+	self->node_lookup[rem_id] = NULL;
+	free(node);
+	return true;
+}
+
+
+void TEST_treeRemoveAndInsert() {
+	Tree *t = Tree_new();
+	Tree_add_node(t, 0, 1);
+	Tree_add_node(t, 0, 2);
+	Tree_add_node(t, 0, 3);
+	Tree_add_node(t, 1, 4);
+	Tree_add_node(t, 1, 5);
+	Tree_add_node(t, 2, 6);
+	Tree_add_node(t, 3, 7);
+	Tree_add_node(t, 4, 8);
+
+	Tree_remove_node(t, 1);
+	Tree_remove_node(t, 2);
+	Tree_remove_node(t, 3);
+	Tree_remove_node(t, 4);
+	Tree_remove_node(t, 5);
+	Tree_remove_node(t, 6);
+	Tree_remove_node(t, 7);
+	Tree_remove_node(t, 8);
+
+	assert(LinkedList_is_empty(t->root->children));
+	LinkedList_shallow_free(t->root->children);
+	LinkedList_shallow_free(t->root->items);
+	free(t->root);
+}
 
 int main() {
 	TEST_linkedListImpl();
+	TEST_treeRemoveAndInsert();
 	return 0;
 }
+

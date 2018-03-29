@@ -4,7 +4,7 @@
 #include "tree.h"
 
 /********************* Doubly Linked List *******************************/
-void LinkedList_remove_node(struct LinkedList *self, struct ListNode *node);
+void LinkedList_remove_node(struct LinkedList *self, struct ListNode *node, void (*destruct)(void *));
 
 struct ListNode *LinkedList_push_tail(struct LinkedList *self, void *val);
 
@@ -54,25 +54,32 @@ LinkedList *LinkedList_new() {
 	return ll;
 }
 
-void *LinkedList_deep_free(LinkedList *self) {
+void *LinkedList_deep_free(LinkedList *self, void (*destruct)(void *)) {
 	ListNode *curr = self->head;
 	while (curr) {
 		ListNode *next = curr->next;
-		free(curr->val);
+		if (destruct)
+			destruct(curr->val);
+		else
+			free(curr->val);
 		free(curr);
 		curr = next;
 	}
 	free(self);
 }
 
-void LinkedList_remove_node(LinkedList *self, ListNode *node) {
+//TODO add strategy for freeing the value
+void LinkedList_remove_node(LinkedList *self, ListNode *node, void (*destruct)(void *)) {
 	if (node == self->head || node == self->tail) {
 		printf("Error: attempt to remove sentinel nodes");
 		exit(1);
 	}
 	node->prev->next = node->next;
 	node->next->prev = node->prev;
-	free(node->val);
+	if (destruct)
+		destruct(node->val);
+	else
+		free(node->val);
 	free(node);
 }
 
@@ -100,8 +107,6 @@ ListNode *LinkedList_insert_sorted_desc(LinkedList *self, int val) {
 	}
 
 	return ListNode_add_after(curr, new_node);
-
-
 }
 
 ListNode *LinkedList_concat(LinkedList *self, LinkedList *merged) {

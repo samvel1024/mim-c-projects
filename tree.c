@@ -182,7 +182,7 @@ Tree *Tree_new() {
 	Tree *t = malloc(sizeof(Tree));
 	TreeNode *root = TreeNode_new(0);
 	t->root = root;
-	t->node_lookup = calloc(sizeof(TreeNode *), NODE_LOOKUP_SIZE);
+	t->node_lookup = calloc(NODE_LOOKUP_SIZE, sizeof(TreeNode *));
 	t->node_lookup[0] = root;
 	return t;
 }
@@ -205,6 +205,7 @@ TreeNode *Tree_add_node(struct Tree *self, int parent_id, int id) {
 	TreeNode *parent = Tree_get(self, parent_id);
 	TreeNode *child = TreeNode_new(id);
 	TreeNode_add_child(parent, child);
+	self->node_lookup[id] = child;
 
 	return child;
 }
@@ -215,10 +216,10 @@ bool Tree_remove_node(struct Tree *self, int rem_id) {
 	TreeNode *node = Tree_get(self, rem_id);
 	if (node == NULL) return false;
 
-	if (!LinkedList_is_empty(node->children)) {
+	if (!LinkedList_is_empty(node->children))
 		ListNode_add_after(node->in_parent, node->children->head->next, node->children->tail->prev);
-		ListNode_remove(node->in_parent);
-	}
+
+	ListNode_remove(node->in_parent);
 	LinkedList_shallow_free(node->children);
 	LinkedList_deep_free(node->items, NULL);
 	self->node_lookup[rem_id] = NULL;
@@ -229,23 +230,23 @@ bool Tree_remove_node(struct Tree *self, int rem_id) {
 
 void TEST_treeRemoveAndInsert() {
 	Tree *t = Tree_new();
-	Tree_add_node(t, 0, 1);
-	Tree_add_node(t, 0, 2);
-	Tree_add_node(t, 0, 3);
-	Tree_add_node(t, 1, 4);
-	Tree_add_node(t, 1, 5);
-	Tree_add_node(t, 2, 6);
-	Tree_add_node(t, 3, 7);
-	Tree_add_node(t, 4, 8);
+	assert(Tree_add_node(t, 0, 1));
+	assert(Tree_add_node(t, 0, 2));
+	assert(Tree_add_node(t, 0, 3));
+	assert(Tree_add_node(t, 1, 4));
+	assert(Tree_add_node(t, 1, 5));
+	assert(Tree_add_node(t, 2, 6));
+	assert(Tree_add_node(t, 3, 7));
+	assert(Tree_add_node(t, 4, 8));
 
-	Tree_remove_node(t, 1);
-	Tree_remove_node(t, 2);
-	Tree_remove_node(t, 3);
-	Tree_remove_node(t, 4);
-	Tree_remove_node(t, 5);
-	Tree_remove_node(t, 6);
-	Tree_remove_node(t, 7);
-	Tree_remove_node(t, 8);
+	assert(Tree_remove_node(t, 1));
+	assert(Tree_remove_node(t, 2));
+	assert(Tree_remove_node(t, 3));
+	assert(Tree_remove_node(t, 4));
+	assert(Tree_remove_node(t, 5));
+	assert(Tree_remove_node(t, 6));
+	assert(Tree_remove_node(t, 7));
+	assert(Tree_remove_node(t, 8));
 
 	assert(LinkedList_is_empty(t->root->children));
 	LinkedList_shallow_free(t->root->children);

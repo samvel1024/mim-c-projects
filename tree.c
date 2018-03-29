@@ -220,6 +220,7 @@ bool Tree_remove_node(struct Tree *self, int rem_id) {
 		ListNode_add_after(node->in_parent, node->children->head->next, node->children->tail->prev);
 
 	ListNode_remove(node->in_parent);
+	free(node->in_parent);
 	LinkedList_shallow_free(node->children);
 	LinkedList_deep_free(node->items, NULL);
 	self->node_lookup[rem_id] = NULL;
@@ -234,7 +235,7 @@ void TEST_treeRemoveAndInsert() {
 	assert(Tree_add_node(t, 0, 2));
 	assert(Tree_add_node(t, 0, 3));
 	assert(Tree_add_node(t, 0, 10));
-	assert(Tree_add_node(t, 1, 4));
+	assert(Tree_add_node(t, 0, 4));
 	assert(Tree_add_node(t, 1, 5));
 	assert(Tree_add_node(t, 2, 6));
 	assert(Tree_add_node(t, 3, 7));

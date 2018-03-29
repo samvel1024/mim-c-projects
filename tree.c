@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include "tree.h"
 
 #define assert__(x) for ( ; !(x) ; assert(x) )
@@ -13,7 +14,7 @@ struct ListNode *LinkedList_push_tail(struct LinkedList *self, void *val);
 
 struct ListNode *LinkedList_insert_sorted_desc(struct LinkedList *self, int val);
 
-void *LinkedList_concat(struct LinkedList *self, struct LinkedList *merged);
+void LinkedList_concat(struct LinkedList *self, struct LinkedList *merged);
 
 
 typedef struct ListNode {
@@ -57,7 +58,7 @@ LinkedList *LinkedList_new() {
 	return ll;
 }
 
-void *LinkedList_deep_free(LinkedList *self, void (*destruct)(void *)) {
+void LinkedList_deep_free(LinkedList *self, void (*destruct)(void *)) {
 	ListNode *curr = self->head;
 	while (curr) {
 		ListNode *next = curr->next;
@@ -111,14 +112,14 @@ ListNode *LinkedList_insert_sorted_desc(LinkedList *self, int val) {
 	return ListNode_add_after(curr, new_node);
 }
 
-void *LinkedList_concat(LinkedList *self, LinkedList *merged) {
+void LinkedList_concat(LinkedList *self, LinkedList *merged) {
 	self->tail->prev->next = merged->head->next;
 	merged->head->next->prev = self->tail->prev;
 	free(self->tail);
 	free(merged->head);
 }
 
-boolean LinkedList_equal(LinkedList *self, int arr[]) {
+bool LinkedList_equal(LinkedList *self, int arr[]) {
 	assert(self->head->val == NULL);
 	assert(self->tail->val == NULL);
 	int index = 0;
@@ -127,6 +128,7 @@ boolean LinkedList_equal(LinkedList *self, int arr[]) {
 		assert(ListNode_as_int(n) == arr[index++]);
 		n = n->next;
 	}
+	return true;
 }
 
 
@@ -158,6 +160,7 @@ TreeNode *TreeNode_new(int id) {
 	t->items = LinkedList_new();
 	t->in_parent = NULL;
 	t->id = id;
+	return t;
 };
 
 void TreeNode_add_child(TreeNode *parent, TreeNode *child) {
@@ -196,4 +199,5 @@ TreeNode *add_node(struct Tree *self, int parent_id, int id) {
 
 int main() {
 	TEST_linkedListImpl();
+	return 0;
 }

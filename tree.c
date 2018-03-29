@@ -3,14 +3,17 @@
 #include <stdlib.h>
 #include "tree.h"
 
+#define assert__(x) for ( ; !(x) ; assert(x) )
+
+
 /********************* Doubly Linked List *******************************/
 void LinkedList_remove_node(struct LinkedList *self, struct ListNode *node, void (*destruct)(void *));
 
 struct ListNode *LinkedList_push_tail(struct LinkedList *self, void *val);
 
-struct ListNode *LinkedList_insert_sorted(struct LinkedList *self, int val);
+struct ListNode *LinkedList_insert_sorted_desc(struct LinkedList *self, int val);
 
-struct ListNode *LinkedList_concat(struct LinkedList *self, struct LinkedList *merged);
+void *LinkedList_concat(struct LinkedList *self, struct LinkedList *merged);
 
 
 typedef struct ListNode {
@@ -68,7 +71,6 @@ void *LinkedList_deep_free(LinkedList *self, void (*destruct)(void *)) {
 	free(self);
 }
 
-//TODO add strategy for freeing the value
 void LinkedList_remove_node(LinkedList *self, ListNode *node, void (*destruct)(void *)) {
 	if (node == self->head || node == self->tail) {
 		printf("Error: attempt to remove sentinel nodes");
@@ -109,26 +111,32 @@ ListNode *LinkedList_insert_sorted_desc(LinkedList *self, int val) {
 	return ListNode_add_after(curr, new_node);
 }
 
-ListNode *LinkedList_concat(LinkedList *self, LinkedList *merged) {
+void *LinkedList_concat(LinkedList *self, LinkedList *merged) {
 	self->tail->prev->next = merged->head->next;
 	merged->head->next->prev = self->tail->prev;
 	free(self->tail);
 	free(merged->head);
 }
 
+boolean LinkedList_equal(LinkedList *self, int arr[]) {
+	assert(self->head->val == NULL);
+	assert(self->tail->val == NULL);
+	int index = 0;
+	ListNode *n = self->head->next;
+	while (n != self->tail) {
+		assert(ListNode_as_int(n) == arr[index++]);
+		n = n->next;
+	}
+}
+
 
 void TEST_linkedListImpl() {
 	LinkedList *ll = LinkedList_new();
-	assert(ll->head == NULL);
-	assert(ll->tail == NULL);
-	ListNode *node = LinkedList_insert_sorted(ll, 1);
-	assert(ll->head == ll->tail);
-	assert((*(int *) (ll->head->val)) == 1);
-	assert(ll->head != NULL);
-	LinkedList_remove_node(ll, node);
-	assert(ll->head == NULL);
-	assert(ll->tail == NULL);
-	free(ll);
+	LinkedList_insert_sorted_desc(ll, 0);
+	LinkedList_insert_sorted_desc(ll, 2);
+	LinkedList_insert_sorted_desc(ll, 1);
+	int order[] = {2, 1, 0};
+	assert(LinkedList_equal(ll, order));
 }
 
 
@@ -186,3 +194,6 @@ TreeNode *add_node(struct Tree *self, int parent_id, int id) {
 }
 
 
+int main() {
+	TEST_linkedListImpl();
+}

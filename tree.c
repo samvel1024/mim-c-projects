@@ -4,16 +4,14 @@
 #include "tree.h"
 
 /********************* Doubly Linked List *******************************/
-
-
 void LinkedList_remove_node(struct LinkedList *self, struct ListNode *node);
 
-//struct ListNode *LinkedList_push_tail(struct LinkedList *self, void *val);
-//
-//struct ListNode *LinkedList_push_tail_int(struct LinkedList *self, int val);
-//
-//struct ListNode *LinkedList_concat(struct LinkedList *self, struct LinkedList *merged);
-//
+struct ListNode *LinkedList_push_tail(struct LinkedList *self, void *val);
+
+struct ListNode *LinkedList_push_tail_int(struct LinkedList *self, int val);
+
+struct ListNode *LinkedList_concat(struct LinkedList *self, struct LinkedList *merged);
+
 
 typedef struct ListNode {
 	void *val;
@@ -31,6 +29,17 @@ LinkedList *LinkedList_new() {
 	ll->head = NULL;
 	ll->tail = NULL;
 	return ll;
+}
+
+void *LinkedList_deep_free(LinkedList *self){
+	ListNode *curr = self->head;
+	while(curr){
+		ListNode *next = curr->next;
+		free(curr -> val);
+		free(curr);
+		curr = next;
+	}
+	free(self);
 }
 
 void LinkedList_remove_node(LinkedList *self, ListNode *node) {
@@ -95,11 +104,12 @@ void TEST_linkedListImpl() {
 /********************* Tree *******************************/
 
 
+#define NODE_LOOKUP_SIZE 1000
+
 typedef struct TreeNode {
 	LinkedList *items;
 	LinkedList *children;
 	ListNode *in_parent;
-	struct TreeNode *parent;
 	int id;
 } TreeNode;
 
@@ -108,14 +118,18 @@ TreeNode *TreeNode_new(int id) {
 	t->children = LinkedList_new();
 	t->items = LinkedList_new();
 	t->in_parent = NULL;
-	t->parent = NULL;
 	t->id = id;
 };
+
+void TreeNode_add_child(TreeNode *parent, TreeNode *child) {
+	ListNode *ref = LinkedList_push_tail(parent->children, child);
+	child->in_parent = ref;
+}
 
 
 typedef struct Tree {
 	TreeNode *root;
-	TreeNode *node_lookup[1000];
+	TreeNode *node_lookup[NODE_LOOKUP_SIZE];
 } Tree;
 
 
@@ -123,11 +137,21 @@ Tree *Tree_new() {
 	Tree *t = malloc(sizeof(Tree));
 	TreeNode *root = TreeNode_new(0);
 	t->root = root;
+	//TODO init lookup array
 	return t;
 }
 
 TreeNode *add_node(struct Tree *self, int parent_id, int id) {
+	if (parent_id < 0 || parent_id > NODE_LOOKUP_SIZE || self->node_lookup[parent_id] == NULL)
+		return NULL;
+	if (id < 0 || id > NODE_LOOKUP_SIZE)
+		return NULL;
 
+	TreeNode *parent = self->node_lookup[parent_id];
+	TreeNode *child = TreeNode_new(id);
+	TreeNode_add_child(parent, child);
+
+	return child;
 }
 
 

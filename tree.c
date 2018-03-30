@@ -185,7 +185,7 @@ TreeNode *Tree_get(Tree *self, int id) {
 	return self->node_lookup[id];
 }
 
-TreeNode *Tree_add_node(struct Tree *self, int parent_id, int id) {
+bool Tree_add_node(struct Tree *self, int parent_id, int id) {
 	if (!Tree_exists_node(self, parent_id) || Tree_exists_node(self, id)) return false;
 
 	TreeNode *parent = Tree_get(self, parent_id);
@@ -193,7 +193,7 @@ TreeNode *Tree_add_node(struct Tree *self, int parent_id, int id) {
 	TreeNode_add_child(parent, child);
 	self->node_lookup[id] = child;
 
-	return child;
+	return false;
 }
 
 bool Tree_remove_node(struct Tree *self, int rem_id) {

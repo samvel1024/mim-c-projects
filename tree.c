@@ -2,6 +2,8 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <limits.h>
+#include <memory.h>
 #include "tree.h"
 
 
@@ -107,6 +109,8 @@ ListNode *LinkedList_insert_sorted_desc(LinkedList *self, int val) {
 		int curr_val = ListNode_as_int(curr->next);
 		if (curr_val < val)
 			break;
+		else if (curr_val == val)
+			return NULL;
 		curr = curr->next;
 	}
 
@@ -127,7 +131,8 @@ bool LinkedList_equal(LinkedList *self, int arr[]) {
 	int index = 0;
 	ListNode *n = self->head->next;
 	while (n != self->tail) {
-		assert(ListNode_as_int(n) == arr[index++]);
+		assert(ListNode_as_int(n) == arr[index]);
+		++index;
 		n = n->next;
 	}
 	return true;
@@ -232,8 +237,8 @@ bool Tree_add_item(Tree *self, int node_id, int item) {
 	if (!Tree_exists_node(self, node_id))
 		return false;
 	TreeNode *t = Tree_get(self, node_id);
-	LinkedList_insert_sorted_desc(t->items, item);
-	return true;
+	ListNode *added = LinkedList_insert_sorted_desc(t->items, item);
+	return added != NULL;
 }
 
 bool Tree_remove_item(Tree *self, int node_id, int item) {
@@ -241,15 +246,101 @@ bool Tree_remove_item(Tree *self, int node_id, int item) {
 		return false;
 	TreeNode *node = Tree_get(self, node_id);
 	ListNode *rem = node->items->head->next;
-	while (rem != node->items->tail) {
+	bool found = false;
+	while (!found && rem != node->items->tail) {
 		int val = ListNode_as_int(rem);
 		if (val == item) {
 			ListNode_remove(rem);
 			free(rem->val);
 			free(rem);
+			found = true;
 		}
 	}
+	return found;
+}
+
+#define EMPTY_ITEM (-1)
+
+void TreeNode_collect_items(TreeNode *node, int items[], int limit, int min) {
+	int count = 0;
+	ListNode *curr = node->items->head->next;
+	while (curr != node->items->tail && ListNode_as_int(curr) > min && count < limit) {
+		items[count++] = ListNode_as_int(curr);
+		curr = curr->next;
+	}
+	while (count < limit)
+		items[count++] = EMPTY_ITEM;
+}
+
+void merge_sorted(int dest[], int a[], int b[], int len) {
+	int ai = 0, bi = 0, di = 0;
+	while (ai < len && bi < len && di < len) {
+		if (a[ai] > b[bi])
+			dest[di++] = a[ai++];
+		else if (b[bi] > a[ai])
+			dest[di++] = b[bi++];
+		else {
+			int val = b[bi];
+			while (bi < len && b[bi++] == val);
+			while (ai < len && a[ai++] == val);
+			dest[di++] = val;
+		}
+	}
+	while (ai < len && di < len)
+		dest[di++] = a[ai++];
+	while (bi < len && di < len)
+		dest[di++] = b[bi++];
+}
+
+
+void TreeNode_collect_recursive(TreeNode *curr, int parent_max, int limit, int ans[]) {
+
+	TreeNode_collect_items(curr, ans, limit, parent_max);
+
+	if (LinkedList_is_empty(curr->items))
+		return;
+
+	int my_max = ListNode_as_int(curr->items->head->next);
+	if (my_max < parent_max)
+		return;
+
+	int *buff1 = malloc(sizeof(int) * limit);
+	int *buff2 = malloc(sizeof(int) * limit);
+
+	ListNode *child = curr->children->head->next;
+	while (child != curr->children->tail) {
+		memcpy(buff1, ans, sizeof(int) * limit);
+		TreeNode_collect_recursive((TreeNode *) (child->val), my_max, limit, buff2);
+		merge_sorted(ans, buff1, buff2, limit);
+		child = child->next;
+	}
+
+	free(buff1);
+	free(buff2);
+
+}
+
+
+bool Tree_extract_max(Tree *self, int node_id, int limit, int ans[]) {
+	if (!Tree_exists_node(self, node_id))
+		return false;
+	TreeNode_collect_recursive(self->root, -1, limit, ans);
 	return true;
+}
+
+
+void TEST_TreeExtractMax() {
+	Tree *t = Tree_new();
+	Tree_add_node(t, 0, 2);
+	Tree_add_node(t, 2, 1);
+
+	Tree_add_item(t, 0, 1337);
+	Tree_add_item(t, 0, 1410);
+	Tree_add_item(t, 2, 1683);
+	Tree_add_item(t, 1, 2018);
+
+	int ans[] = {1, 2, 3};
+	Tree_extract_max(t, 0, 3, ans);
 }
 
 
@@ -296,8 +387,7 @@ void TEST_treeRemoveAndInsert() {
 }
 
 int main() {
-	TEST_linkedListImpl();
-	TEST_treeRemoveAndInsert();
+	TEST_TreeExtractMax();
 	return 0;
 }
 

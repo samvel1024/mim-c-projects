@@ -74,19 +74,6 @@ void LinkedList_deep_free(LinkedList *self, void (*destruct)(void *)) {
 	free(self);
 }
 
-void LinkedList_remove_node(LinkedList *self, ListNode *node, void (*destruct)(void *)) {
-	if (node == self->head || node == self->tail) {
-		printf("Error: attempt to remove sentinel nodes");
-		exit(1);
-	}
-	node->prev->next = node->next;
-	node->next->prev = node->prev;
-	if (destruct)
-		destruct(node->val);
-	else
-		free(node->val);
-	free(node);
-}
 
 bool LinkedList_is_empty(LinkedList *self) {
 	return self->head->next == self->tail;
@@ -118,12 +105,6 @@ ListNode *LinkedList_insert_sorted_desc(LinkedList *self, int val) {
 	return new_node;
 }
 
-void LinkedList_concat(LinkedList *self, LinkedList *merged) {
-	self->tail->prev->next = merged->head->next;
-	merged->head->next->prev = self->tail->prev;
-	free(self->tail);
-	free(merged->head);
-}
 
 bool LinkedList_equal(LinkedList *self, int arr[]) {
 	assert(self->head->val == NULL);

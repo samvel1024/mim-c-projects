@@ -19,4 +19,7 @@ bool Tree_add_item(struct Tree *self, int node_id, int item);
 
 bool Tree_remove_item(struct Tree *self, int node_id, int item);
 
+bool Tree_extract_max(struct Tree *self, int node_id, int limit, int ans[]);
+
+
 #endif

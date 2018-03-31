@@ -115,6 +115,7 @@ bool Parser_read_and_validate(Parser *self) {
 	++line_index;
 	if (!Command_is_single_arg(self->com_buff->comm_name))
 		Parser_read_word(self->line_buff, self->com_buff->arg2, &line_index);
+	return true;
 }
 
 void Parser_print_status(bool ok) {
@@ -163,7 +164,7 @@ void Parser_handle_next_line(Parser *self, struct Tree *t) {
 			}
 		}
 	} else {
-		printf("Unhandled command name %s", com->comm_name);
+		printf("Unhandled command name %s\n", com->comm_name);
 		exit(1);
 	}
 

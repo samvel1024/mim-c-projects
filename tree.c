@@ -173,6 +173,10 @@ Tree *Tree_new() {
 	return t;
 }
 
+void Tree_free(Tree *self){
+	//TODO
+}
+
 bool Tree_valid_index(int i) {
 	return (i >= 0 && i <= NODE_LOOKUP_SIZE);
 }
@@ -236,11 +240,11 @@ bool Tree_remove_item(Tree *self, int node_id, int item) {
 			free(rem);
 			found = true;
 		}
+		rem = rem->next;
 	}
 	return found;
 }
 
-#define EMPTY_ITEM (-1)
 
 void TreeNode_collect_items(TreeNode *node, int items[], int limit, int min) {
 	int count = 0;

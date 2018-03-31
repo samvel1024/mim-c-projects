@@ -9,11 +9,11 @@
 
 
 #define LINE_BUF_SIZE 200
-#define COMM_ADD_NODE  "addUser"
-#define COMM_DEL_USER  "delUser"
-#define COMM_ADD_ITEM  "addMovie"
-#define COMM_DEL_ITEM  "delMovie"
-#define COMM_QUERY  "marathon"
+#define COMM_ADD_NODE "addUser"
+#define COMM_DEL_USER "delUser"
+#define COMM_ADD_ITEM "addMovie"
+#define COMM_DEL_ITEM "delMovie"
+#define COMM_QUERY "marathon"
 #define DOUBLE_ARG_REGEX "^(addUser|delMovie|addMovie|marathon) ([1-9]\\d*|0) ([1-9]\\d*|0)$"
 #define SINGLE_ARG_REGEX "^(delUser) ([1-9]\\d*|0)$"
 
@@ -77,6 +77,11 @@ Parser *Parser_new() {
 	p->com_buff = Command_new();
 	Parser_read(p);
 	return p;
+}
+
+void Parser_free(Parser *self) {
+	free(self->com_buff);
+	free(self);
 }
 
 
@@ -158,12 +163,13 @@ void Parser_handle_next_line(Parser *self, struct Tree *t) {
 		if (!Tree_extract_max(t, atoi(com->arg1), limit, ans)) {
 			Parser_print_status(false);
 		} else {
-			if (ans[0] == -1) {
+			if (ans[0] == EMPTY_ITEM) {
 				printf("NONE\n");
 			} else {
 				Parser_print_query_result(ans, limit);
 			}
 		}
+		free(ans);
 	} else {
 		printf("Unhandled command name %s\n", com->comm_name);
 		exit(1);
@@ -172,12 +178,41 @@ void Parser_handle_next_line(Parser *self, struct Tree *t) {
 }
 
 
-int main() {
+void test() {
+	int ans[100];
+	struct Tree *t = Tree_new();
+	Tree_add_item(t, 0, 1337);
+	Tree_extract_max(t, 0, 2, ans);
+	Tree_add_item(t, 0, 1410);
+	Tree_add_node(t, 0, 1);
+	Tree_add_node(t, 1, 2);
+	Tree_add_item(t, 1, 1815);
+	Tree_add_item(t, 2, 1683);
+	Tree_add_item(t, 2, 1525);
+	Tree_extract_max(t, 0, 2, ans);
+
+	Tree_remove_item(t, 2, 1525);
+	Tree_add_node(t,2, 1);
+	Tree_remove_item(t, 1, 2018);
+	Tree_extract_max(t, 0, 3, ans);
+}
+
+
+void test_stdin() {
 	struct Tree *t = Tree_new();
 	Parser *p = Parser_new();
 	while (p->has_next) {
 		Parser_handle_next_line(p, t);
 	}
-	return 0;
+	Parser_free(p);
+}
+
+int main() {
+
+	bool TEST = true;
+	if (TEST) test();
+	else test_stdin();
+
+
 }
 

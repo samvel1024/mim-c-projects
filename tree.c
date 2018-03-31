@@ -193,7 +193,7 @@ bool Tree_add_node(struct Tree *self, int parent_id, int id) {
 	TreeNode_add_child(parent, child);
 	self->node_lookup[id] = child;
 
-	return false;
+	return true;
 }
 
 bool Tree_remove_node(struct Tree *self, int rem_id) {

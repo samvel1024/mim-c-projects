@@ -14,8 +14,8 @@
 #define COMM_ADD_ITEM  "addMovie"
 #define COMM_DEL_ITEM  "delMovie"
 #define COMM_QUERY  "marathon"
-#define DOUBLE_ARG_REGEX "^(addUser|delMovie|addMovie|marathon) [1-9][0-9]* [1-9][0-9]*$"
-#define SINGLE_ARG_REGEX "^(delUser) [1-9][0-9]*$"
+#define DOUBLE_ARG_REGEX "^(addUser|delMovie|addMovie|marathon) ([1-9]\\d*|0) ([1-9]\\d*|0)$"
+#define SINGLE_ARG_REGEX "^(delUser) ([1-9]\\d*|0)$"
 
 typedef struct command_t {
 	char comm_name[LINE_BUF_SIZE];
@@ -88,18 +88,19 @@ void Parser_skip_line(Parser *self) {
 
 void Parser_read_line(Parser *self, char *buff) {
 	int i = 0;
-	while (i < LINE_BUF_SIZE - 1 && self->buff != '\n' && self->has_next) {
+	while (i <= LINE_BUF_SIZE - 1 && self->buff != '\n' && self->has_next) {
 		buff[i++] = self->buff;
 		Parser_read(self);
 	}
 	buff[i] = '\0';
-	Parser_skip_line(self);
+	if (self->buff != '\n')
+		Parser_skip_line(self);
 }
 
 void Parser_read_word(const char *source, char *target, int *source_i) {
 	int i = 0;
 	while (source[*source_i] != '\0' && source[*source_i] != ' ') {
-		target[i++] = source[*source_i++];
+		target[i++] = source[(*source_i)++];
 	}
 	target[i] = '\0';
 }

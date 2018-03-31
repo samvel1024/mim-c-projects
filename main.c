@@ -4,19 +4,12 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <regex.h>
 #include "tree.h"
 
 
-#define BUF_SIZE 100
-
-typedef enum {
-	ADD_NODE,
-	REMOVE_NODE,
-	ADD_ITEM,
-	REMOVE_ITEM,
-	QUERY
-} CommandType;
-
+#define LINE_BUF_SIZE 500
+#define COM_BUF_SIZE 100
 #define COMM_ADD_NODE  "addUser"
 #define COMM_DEL_USER  "delUser"
 #define COMM_ADD_ITEM  "addMovie"
@@ -26,9 +19,9 @@ typedef enum {
 const char *COMMAND_NAMES[] = {COMM_ADD_ITEM, COMM_ADD_NODE, COMM_DEL_USER, COMM_DEL_ITEM, COMM_QUERY};
 
 typedef struct command_t {
-	char comm_name[BUF_SIZE];
-	char arg1[BUF_SIZE];
-	char arg2[BUF_SIZE];
+	char comm_name[COM_BUF_SIZE];
+	char arg1[COM_BUF_SIZE];
+	char arg2[COM_BUF_SIZE];
 } Command;
 
 Command *Command_new() {
@@ -80,14 +73,25 @@ Parser *Parser_new() {
 	return p;
 }
 
-bool Parser_read_word(Parser *self, char *buff, char terminator) {
+void Parser_read_line(Parser *self, char *buff) {
 	int i = 0;
-	while (self->buff != terminator && self->buff != '\n' && self->has_next) {
+	while (self->buff != '\n' && self->has_next) {
 		buff[i++] = self->buff;
 		Parser_read(self);
 	}
 	buff[i] = '\0';
-	return self->buff != '\n';
+}
+
+bool Parser_read_word(const char *source, char *target, int *start) {
+	int i = 0;
+	while (source[*start] != '\0' && source[*start] != ' ') {
+		target[i++] = source[*start++];
+	}
+	return source[*start] != '\0';
+}
+
+bool Parser_is_endl(Parser *self) {
+	return self->buff == '\n';
 }
 
 
@@ -97,27 +101,22 @@ void Parser_skip_line(Parser *self) {
 	Parser_read(self); //Read the first char of the next line
 }
 
-
-bool Parser_read_and_validate(Parser *self, Command *com) {
-	//Check if command is not interrupted by a new line
-	if (!Parser_read_word(self, com->comm_name, ' ')
-	    || !Parser_read_word(self, com->arg1, ' ')
-	    || !(Command_is_single_arg(com->comm_name) || Parser_read_word(self, com->arg2, '\n'))) {
-		return false;
-	}
-
-	//Check if all words together form a valid command syntax
-	if (!Command_is_valid_name(com->comm_name) || !Command_is_valid_arg(com->arg1) ||
-	    (!Command_is_valid_arg(com->comm_name) && !Command_is_valid_arg(com->arg2))) {
-		return false;
-	}
-
-	return true;
+void Parser_print_status(bool ok) {
+	printf(ok ? "OK\n" : "ERROR\n");
 }
 
-void print_execution_status(bool ok) {
-	printf(ok ? "OK\n", "ERROR\n");
+bool Parser_read_and_validate(Parser *self, Command *com, char *buf) {
+	Parser_read_line(self, buf);
+//
+//	int line_index = 0;
+//	if (!Parser_read_word(buf, com->comm_name, &line_index) || !){
+//		Parser_print_status(false);
+//	}
+
+
 }
+
+
 
 void Parser_handle_next_line(Parser *self, struct Tree *t, Command *com) {
 
@@ -126,19 +125,19 @@ void Parser_handle_next_line(Parser *self, struct Tree *t, Command *com) {
 		return;
 	}
 
-	if (!Parser_read_and_validate(self, com)) {
-		printf("ERROR\n");
-		return;
-	}
+//	if (!Parser_read_and_validate(self, com)) {
+//		printf("ERROR\n");
+//		return;
+//	}
 
 	if (strcmp(com->comm_name, COMM_ADD_NODE) == 0) {
-		print_execution_status(Tree_add_node(t, atoi(com->arg1), atoi(com->arg2)));
+		Parser_print_status(Tree_add_node(t, atoi(com->arg1), atoi(com->arg2)));
 	} else if (strcmp(com->comm_name, COMM_ADD_ITEM) == 0) {
-		print_execution_status(Tree_add_item(t, atoi(com->arg1), atoi(com->arg2)));
+		Parser_print_status(Tree_add_item(t, atoi(com->arg1), atoi(com->arg2)));
 	} else if (strcmp(com->comm_name, COMM_DEL_ITEM) == 0) {
-		print_execution_status(Tree_remove_item(t, atoi(com->arg1), atoi(com->arg2));
+		Parser_print_status(Tree_remove_item(t, atoi(com->arg1), atoi(com->arg2)));
 	} else if (strcmp(com->comm_name, COMM_DEL_USER) == 0) {
-		print_execution_status(Tree_remove_node(t, atoi(com->arg1)));
+		Parser_print_status(Tree_remove_node(t, atoi(com->arg1)));
 	} else if (strcmp(com->comm_name, COMM_QUERY) == 0) {
 
 	} else {
@@ -148,13 +147,45 @@ void Parser_handle_next_line(Parser *self, struct Tree *t, Command *com) {
 
 }
 
+//
+//int main() {
+//	struct Tree *t = Tree_new();
+//	Command *buf_command = Command_new();
+//	Parser *p = Parser_new();
+//	while (p->has_next) {
+//		Parser_handle_next_line(p, t, buf_command);
+//	}
+//	return 0;
+//}
 
-int main() {
-	struct Tree *t = Tree_new();
-	Command *buf_command = Command_new();
-	Parser *p = Parser_new();
-	while (p->has_next) {
-		Parser_handle_next_line(p, t, buf_command);
+int main () {
+	regex_t regex;
+	int reti;
+	char msgbuf[100];
+
+/* Compile regular expression */
+	reti = regcomp(&regex, "^a[[:alnum:]]", 0);
+	if (reti) {
+		fprintf(stderr, "Could not compile regex\n");
+		exit(1);
 	}
-	return 0;
+
+/* Execute regular expression */
+	reti = regexec(&regex, "abc", 0, NULL, 0);
+	if (!reti) {
+		puts("Match");
+	}
+	else if (reti == REG_NOMATCH) {
+		puts("No match");
+	}
+	else {
+		regerror(reti, &regex, msgbuf, sizeof(msgbuf));
+		fprintf(stderr, "Regex match failed: %s\n", msgbuf);
+		exit(1);
+	}
+
+/* Free memory allocated to the pattern buffer by regcomp() */
+	regfree(&regex);
+
+	return(0);
 }

@@ -367,8 +367,8 @@ void TEST_treeRemoveAndInsert() {
 	free(t);
 }
 
-int main() {
-	TEST_TreeExtractMax();
-	return 0;
-}
+//int main() {
+//	TEST_TreeExtractMax();
+//	return 0;
+//}
 

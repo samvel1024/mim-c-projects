@@ -61,16 +61,15 @@ void LinkedList_shallow_free(LinkedList *self) {
 }
 
 void LinkedList_deep_free(LinkedList *self, void (*destruct)(void *)) {
-	ListNode *curr = self->head;
-	while (curr) {
+	ListNode *curr = self->head->next;
+	while (curr != self->tail) {
 		ListNode *next = curr->next;
-		if (destruct)
-			destruct(curr->val);
-		else
-			free(curr->val);
+		destruct(curr->val);
 		free(curr);
 		curr = next;
 	}
+	free(self->head);
+	free(self->tail);
 	free(self);
 }
 
@@ -127,7 +126,7 @@ void TEST_linkedListImpl() {
 	LinkedList_insert_sorted_desc(ll, 1);
 	int order[] = {2, 1, 0};
 	assert(LinkedList_equal(ll, order));
-	LinkedList_deep_free(ll, NULL);
+	LinkedList_deep_free(ll, free);
 }
 
 
@@ -152,6 +151,19 @@ TreeNode *TreeNode_new(int id) {
 	return t;
 };
 
+void TreeNode_free_adapt_void(void *ptr);
+
+void TreeNode_free(TreeNode *self) {
+	LinkedList_deep_free(self->items, free);
+	LinkedList_deep_free(self->children, TreeNode_free_adapt_void);
+	free(self);
+}
+
+void TreeNode_free_adapt_void(void *ptr) {
+	TreeNode_free((TreeNode *) ptr);
+}
+
+
 void TreeNode_add_child(TreeNode *parent, TreeNode *child) {
 	ListNode *ref = LinkedList_push_tail(parent->children, child);
 	child->in_parent = ref;
@@ -173,8 +185,10 @@ Tree *Tree_new() {
 	return t;
 }
 
-void Tree_free(Tree *self){
-	//TODO
+void Tree_free(Tree *self) {
+	free(self->node_lookup);
+	TreeNode_free(self->root);
+	free(self);
 }
 
 bool Tree_valid_index(int i) {
@@ -201,8 +215,7 @@ bool Tree_add_node(struct Tree *self, int parent_id, int id) {
 }
 
 bool Tree_remove_node(struct Tree *self, int rem_id) {
-	if (!Tree_exists_node(self, rem_id)) return false;
-	if (rem_id == 0) return false;
+	if (rem_id == 0 || !Tree_exists_node(self, rem_id)) return false;
 	TreeNode *node = Tree_get(self, rem_id);
 	if (node == NULL) return false;
 
@@ -212,7 +225,7 @@ bool Tree_remove_node(struct Tree *self, int rem_id) {
 	ListNode_remove(node->in_parent);
 	free(node->in_parent);
 	LinkedList_shallow_free(node->children);
-	LinkedList_deep_free(node->items, NULL);
+	LinkedList_deep_free(node->items, free);
 	free(node);
 	self->node_lookup[rem_id] = NULL;
 	return true;

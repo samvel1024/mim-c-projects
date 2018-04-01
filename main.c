@@ -226,6 +226,15 @@ void test() {
 	Tree_extract_max(t, 0, 2, ans);
 }
 
+void test_free(){
+	int ans[100];
+	struct Tree *t = Tree_new();
+	Tree_add_node(t, 0, 1);
+	Tree_add_node(t, 0, 2);
+	Tree_add_node(t, 0, 3);
+	Tree_free(t);
+}
+
 
 void test_stdin() {
 	struct Tree *t = Tree_new();
@@ -234,12 +243,13 @@ void test_stdin() {
 		Parser_handle_next_line(p, t);
 	}
 	Parser_free(p);
+	Tree_free(t);
 }
 
 int main() {
 
-	bool TEST = false;
-	if (TEST) test();
+	bool TEST = true;
+	if (TEST) test_free();
 	else test_stdin();
 //	printf("%d", Command_is_valid_line("addMovie 141 14901"));
 

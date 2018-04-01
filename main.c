@@ -147,7 +147,10 @@ bool Parser_read_and_validate(Parser *self) {
 }
 
 void Parser_print_status(bool ok) {
-	printf(ok ? "OK\n" : "ERROR\n");
+	if (ok)
+		printf("OK\n");
+	else
+		fprintf(stderr, "ERROR\n");
 }
 
 void Parser_print_query_result(int res[], int limit) {

@@ -191,10 +191,11 @@ void test() {
 	Tree_add_item(t, 2, 1525);
 	Tree_extract_max(t, 0, 2, ans);
 
+	Tree_remove_node(t, 1);
 	Tree_remove_item(t, 2, 1525);
-	Tree_add_node(t,2, 1);
-	Tree_remove_item(t, 1, 2018);
-	Tree_extract_max(t, 0, 3, ans);
+	Tree_add_node(t, 2, 1);
+	Tree_add_item(t, 1, 2018);
+	Tree_extract_max(t, 0, 2, ans);
 }
 
 
@@ -209,7 +210,7 @@ void test_stdin() {
 
 int main() {
 
-	bool TEST = true;
+	bool TEST = false;
 	if (TEST) test();
 	else test_stdin();
 

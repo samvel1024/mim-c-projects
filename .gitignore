@@ -1,9 +1,6 @@
 *
 
 !.gitignore
-!/tests
-!/tests/test
-!/tests/test/*
 !CmakeLists.txt
 !extract_tests.sh
 !main.c

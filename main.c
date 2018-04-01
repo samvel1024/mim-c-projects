@@ -7,6 +7,20 @@
 #include <regex.h>
 #include "tree.h"
 
+//#define MODE_DEBUG
+#ifdef MODE_DEBUG
+#define log printf
+#define DECORATE_STDOUT true
+#else
+#define log fake_printf
+#define DECORATE_STDOUT false
+#endif
+#define UNUSED(x) (void)(x)
+
+
+void fake_printf(const char *format, ...) {
+	UNUSED(format);
+}
 
 #define LINE_BUF_SIZE 200
 #define COMM_ADD_NODE "addUser"
@@ -14,8 +28,8 @@
 #define COMM_ADD_ITEM "addMovie"
 #define COMM_DEL_ITEM "delMovie"
 #define COMM_QUERY "marathon"
-#define DOUBLE_ARG_REGEX "^(addUser|delMovie|addMovie|marathon) ([1-9]\\d*|0) ([1-9]\\d*|0)$"
-#define SINGLE_ARG_REGEX "^(delUser) ([1-9]\\d*|0)$"
+#define DOUBLE_ARG_REGEX "^(addUser|delMovie|addMovie|marathon) ([1-9][0-9]*|0) ([1-9][0-9]*|0)$"
+#define SINGLE_ARG_REGEX "^(delUser) ([1-9]*\\d*|0)$"
 
 typedef struct command_t {
 	char comm_name[LINE_BUF_SIZE];
@@ -55,6 +69,8 @@ bool Command_is_single_arg(char *name) {
 
 
 typedef struct parser_t {
+	int row;
+	int col;
 	char buff;
 	bool has_next;
 	char line_buff[LINE_BUF_SIZE];
@@ -63,7 +79,10 @@ typedef struct parser_t {
 
 bool Parser_read(Parser *self) {
 	if (!self->has_next) return false;
+	if (self->buff == '\n')
+		self->row++;
 	char c = (char) getchar();
+	self->col++;
 	self->buff = c;
 	self->has_next = c != EOF;
 	return self->has_next;
@@ -75,6 +94,9 @@ Parser *Parser_new() {
 	p->has_next = true;
 	p->line_buff[0] = '\0';
 	p->com_buff = Command_new();
+	p->buff = '\n';
+	p->row = 0;
+	p->col = 0;
 	Parser_read(p);
 	return p;
 }
@@ -135,20 +157,7 @@ void Parser_print_query_result(int res[], int limit) {
 	printf("\n");
 }
 
-
-void Parser_handle_next_line(Parser *self, struct Tree *t) {
-
-	if (self->buff == '#' || self->buff == '\n') { //Ignored lines
-		Parser_skip_line(self);
-		return;
-	}
-
-	if (!Parser_read_and_validate(self)) {
-		Parser_print_status(false);
-		return;
-	}
-
-	Command *com = self->com_buff;
+void Parser_execute_command(Command *com, struct Tree *t) {
 	if (strcmp(com->comm_name, COMM_ADD_NODE) == 0) {
 		Parser_print_status(Tree_add_node(t, atoi(com->arg1), atoi(com->arg2)));
 	} else if (strcmp(com->comm_name, COMM_ADD_ITEM) == 0) {
@@ -174,6 +183,25 @@ void Parser_handle_next_line(Parser *self, struct Tree *t) {
 		printf("Unhandled command name %s\n", com->comm_name);
 		exit(1);
 	}
+}
+
+
+void Parser_handle_next_line(Parser *self, struct Tree *t) {
+
+	if (self->buff == '#' || self->buff == '\n') { //Ignored lines
+		Parser_skip_line(self);
+		return;
+	}
+
+	if (!Parser_read_and_validate(self)) {
+		Parser_print_status(false);
+		return;
+	}
+
+	Command *com = self->com_buff;
+	log(Command_is_single_arg(com->comm_name) ? "Parsed command: %s %s\n" : "Parsed command: %s %s %s\n", com->comm_name, com->arg1,
+	    com->arg2);
+	Parser_execute_command(com, t);
 
 }
 
@@ -213,7 +241,7 @@ int main() {
 	bool TEST = false;
 	if (TEST) test();
 	else test_stdin();
-
+//	printf("%d", Command_is_valid_line("addMovie 141 14901"));
 
 }
 

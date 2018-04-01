@@ -22,8 +22,8 @@ for f in ./*.in; do
   expect_stdout="${test}.out"
   printf "Running ${test} "
   cat ${f} | ../${prog} 2> ../_temp_stderr 1> ../_temp_stdout
-  diff "../_temp_stderr" ${expect_stderr}
   diff "../_temp_stdout" ${expect_stdout}
+  diff "../_temp_stderr" ${expect_stderr}
   echo "OK"
 done
 

@@ -209,6 +209,7 @@ void Parser_handle_next_line(Parser *self, struct Tree *t) {
 void test() {
 	int ans[100];
 	struct Tree *t = Tree_new();
+	Tree_extract_max(t, 0, 2, ans);
 	Tree_add_item(t, 0, 1337);
 	Tree_extract_max(t, 0, 2, ans);
 	Tree_add_item(t, 0, 1410);
@@ -221,9 +222,11 @@ void test() {
 
 	Tree_remove_node(t, 1);
 	Tree_remove_item(t, 2, 1525);
+	Tree_extract_max(t, 0, 2, ans);
 	Tree_add_node(t, 2, 1);
 	Tree_add_item(t, 1, 2018);
-	Tree_extract_max(t, 0, 2, ans);
+	Tree_extract_max(t, 0, 3, ans);
+	Tree_free(t);
 }
 
 void test_free(){

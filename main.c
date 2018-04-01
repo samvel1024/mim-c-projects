@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <regex.h>
+#include <limits.h>
 #include "tree.h"
 
 //#define MODE_DEBUG
@@ -171,7 +172,8 @@ void Parser_execute_command(Command *com, struct Tree *t) {
 		Parser_print_status(Tree_remove_node(t, atoi(com->arg1)));
 	} else if (strcmp(com->comm_name, COMM_QUERY) == 0) {
 		int limit = atoi(com->arg2);
-		int *ans = malloc(sizeof(int) * limit);
+		int *ans = malloc(sizeof(int) * ((limit > 0) ? limit : 1));
+		ans[0] = EMPTY_ITEM;
 		if (!Tree_extract_max(t, atoi(com->arg1), limit, ans)) {
 			Parser_print_status(false);
 		} else {
@@ -200,10 +202,20 @@ void Parser_handle_next_line(Parser *self, struct Tree *t) {
 		Parser_print_status(false);
 		return;
 	}
-
 	Command *com = self->com_buff;
-	log(Command_is_single_arg(com->comm_name) ? "Parsed command: %s %s\n" : "Parsed command: %s %s %s\n", com->comm_name, com->arg1,
+
+	long arg1 = strtol(com->arg1, 0, 10);
+	long arg2 = Command_is_single_arg(com->comm_name) ? 0 : strtol(com->arg2, 0, 10);
+
+	if (arg1 > INT_MAX || arg2 > INT_MAX){
+		Parser_print_status(false);
+		return;
+	}
+
+	log(Command_is_single_arg(com->comm_name) ? "Parsed command: %s %s\n" : "Parsed command: %s %s %s\n", com->comm_name,
+	    com->arg1,
 	    com->arg2);
+
 	Parser_execute_command(com, t);
 
 }
@@ -232,7 +244,7 @@ void test() {
 	Tree_free(t);
 }
 
-void test_free(){
+void test_free() {
 	int ans[100];
 	struct Tree *t = Tree_new();
 	Tree_add_node(t, 0, 1);

@@ -20,8 +20,8 @@ for f in ./*.in; do
   test=${f%.*}
   expect_stderr="${test}.err"
   expect_stdout="${test}.out"
-  printf "Running ${test} "
-  cat ${f} | ../${prog} 2> ../_temp_stderr 1> ../_temp_stdout
+  printf "Test ${test} "
+  cat ${f} | ../${prog} 2> ../temperr 1> ../tempout
   diff "../_temp_stdout" ${expect_stdout}
   diff "../_temp_stderr" ${expect_stderr}
   echo "OK"

@@ -295,10 +295,8 @@ void TreeNode_collect_recursive(TreeNode *curr, int parent_max, int limit, int a
 
 	TreeNode_collect_items(curr, ans, limit, parent_max);
 
-	if (LinkedList_is_empty(curr->items))
-		return;
 
-	int my_max = ListNode_as_int(curr->items->head->next);
+	int my_max = LinkedList_is_empty(curr->items) ? parent_max : ListNode_as_int(curr->items->head->next);
 	if (my_max < parent_max)
 		return;
 
@@ -322,7 +320,10 @@ void TreeNode_collect_recursive(TreeNode *curr, int parent_max, int limit, int a
 bool Tree_extract_max(Tree *self, int node_id, int limit, int ans[]) {
 	if (!Tree_exists_node(self, node_id))
 		return false;
-	TreeNode_collect_recursive(self->root, -1, limit, ans);
+	if (limit >= 0)
+		TreeNode_collect_recursive(Tree_get(self, node_id), -1, limit, ans);
+	else
+		ans[0] = EMPTY_ITEM;
 	return true;
 }
 

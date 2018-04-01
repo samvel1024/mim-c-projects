@@ -26,3 +26,7 @@ for f in ./*.in; do
   diff "../_temp_stdout" ${expect_stdout}
   echo "OK"
 done
+
+#If there are no errors remove temporary files
+rm -rf "../_temp_stderr"
+rm -rf "../_temp_stdout"

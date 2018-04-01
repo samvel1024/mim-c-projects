@@ -1,8 +1,11 @@
 *
 
 !.gitignore
-!./tests
+!/tests
+!/tests/test
+!/tests/test/*
 !CmakeLists.txt
+!extract_tests.sh
 !main.c
 !tree.c
 !tree.h

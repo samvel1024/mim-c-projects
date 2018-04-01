@@ -270,7 +270,7 @@ void TreeNode_collect_items(TreeNode *node, int items[], int limit, int min) {
 		items[count++] = EMPTY_ITEM;
 }
 
-void merge_sorted(int dest[], int a[], int b[], int len) {
+void merge_sorted(int dest[], const int a[], const int b[], int len) {
 	int ai = 0, bi = 0, di = 0;
 	while (ai < len && bi < len && di < len) {
 		if (a[ai] > b[bi])

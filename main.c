@@ -251,7 +251,7 @@ void test_stdin() {
 
 int main() {
 
-	bool TEST = true;
+	bool TEST = false;
 	if (TEST) test_free();
 	else test_stdin();
 //	printf("%d", Command_is_valid_line("addMovie 141 14901"));

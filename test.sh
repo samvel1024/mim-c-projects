@@ -23,7 +23,7 @@ for f in ./*.in; do
   printf "_______________Test ${test} "
   cat ${f} | ../${prog} 2> ../temperr 1> ../tempout
   diff "../tempout" ${expect_stdout} || true
-#  diff "../temperr" ${expect_stderr} || true
+  diff "../temperr" ${expect_stderr} || true
   echo "PASSED"
 done
 

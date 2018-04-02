@@ -59,7 +59,7 @@ typedef struct parser_t {
 	bool has_next; // EOF reached or not
 	char line_buff[LINE_BUF_SIZE]; // used to read the full line
 	Command *com_buff; // used to parse the store the current command
-	regex_t matcher; // regex matcher
+	regex_t *matcher; // regex matcher
 } Parser;
 
 /**
@@ -87,7 +87,7 @@ Parser *Parser_new() {
 	p->buff = '\n';
 	p->row = 0;
 	p->col = 0;
-	regcomp(&p->matcher, REGEX, REG_EXTENDED);
+	regcomp(p->matcher, REGEX, REG_EXTENDED);
 	Parser_read(p);
 	return p;
 }
@@ -96,7 +96,7 @@ Parser *Parser_new() {
  * Checks for syntax errors in the line
  */
 bool Parser_is_valid_line(Parser *parser) {
-	int status = regexec(&parser->matcher, parser->line_buff, (size_t) 0, NULL, 0);
+	int status = regexec(parser->matcher, parser->line_buff, (size_t) 0, NULL, 0);
 	return status == 0;
 }
 
@@ -106,7 +106,7 @@ bool Parser_is_valid_line(Parser *parser) {
 void Parser_free(Parser *self) {
 	free(self->com_buff);
 	free(self);
-	regfree(&self->matcher);
+	regfree(self->matcher);
 }
 
 /**

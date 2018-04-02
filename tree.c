@@ -372,43 +372,34 @@ void merge_sorted(int dest[], const int a[], const int b[], int len) {
  * Recursive helper function
  * Writes the result of the query into ans
  */
-void TreeNode_collect_recursive(TreeNode *curr, int parent_max, int limit, int ans[]) {
-	TreeNode_collect_items(curr, ans, limit, parent_max);
+void TreeNode_collect_recursive(TreeNode *curr, int parent_max, int limit,
+                                int ans[], int aux[]) {
 
 	int my_max = LinkedList_is_empty(curr->items) ? parent_max : ListNode_as_int(curr->items->head->next);
 	int max = parent_max > my_max ? parent_max : my_max;
 
-	//Initialize helper arrays for merging
-	int *child_buff = malloc(sizeof(int) * limit);
-	int *ans_aux = malloc(sizeof(int) * limit);
-	int *merge_aux = malloc(sizeof(int) * limit);
-	memcpy(ans_aux, ans, sizeof(int) * limit);
+	int *my_buff = malloc(sizeof(int) * limit);
+	TreeNode_collect_items(curr, my_buff, limit, parent_max);
 
 	ListNode *child = curr->children->head->next;
 	while (child != curr->children->tail) {
-		TreeNode_collect_recursive((TreeNode *) (child->val), max, limit, child_buff);
-		merge_sorted(merge_aux, child_buff, ans_aux, limit);
+		TreeNode_collect_recursive((TreeNode *) child->val, max, limit, ans, aux);
 		child = child->next;
-		//Swap helper array with the answer
-		int *tmp = merge_aux;
-		merge_aux = ans_aux;
-		ans_aux = tmp;
 	}
 
-	memcpy(ans, ans_aux, sizeof(int) * limit);
-	free(ans_aux);
-	free(child_buff);
-	free(merge_aux);
-
+	merge_sorted(aux, ans, my_buff, limit);
+	memcpy(ans, aux, sizeof(int) * limit);
+	free(my_buff);
 }
 
 
 bool Tree_extract_max(Tree *self, int node_id, int limit, int ans[]) {
 	if (!Tree_exists_node(self, node_id))
 		return false;
-	if (limit >= 0)
-		TreeNode_collect_recursive(Tree_get(self, node_id), -1, limit, ans);
-	else
-		ans[0] = EMPTY_ITEM;
+	for (int i = 0; i < limit; ++i)
+		ans[i] = EMPTY_ITEM;
+	int *aux = malloc(sizeof(int) * limit);
+	TreeNode_collect_recursive(Tree_get(self, node_id), -1, limit, ans, aux);
+	free(aux);
 	return true;
 }

@@ -9,6 +9,7 @@
 
 
 /******************(to enable MODE_DEBUG flag should be passed)*******************************/
+//#define MODE_DEBUG
 #ifdef MODE_DEBUG
 #define log printf
 #define DECORATE_STDOUT true

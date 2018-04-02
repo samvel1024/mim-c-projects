@@ -185,7 +185,9 @@ Tree *Tree_new() {
 	Tree *t = malloc(sizeof(Tree));
 	TreeNode *root = TreeNode_new(0);
 	t->root = root;
-	t->node_lookup = calloc(NODE_LOOKUP_SIZE, sizeof(TreeNode *));
+	t->node_lookup = malloc(NODE_LOOKUP_SIZE * sizeof(void*));
+	for (int i = 0; i < NODE_LOOKUP_SIZE; ++i)
+		t->node_lookup[i] = NULL;
 	t->node_lookup[0] = root;
 	return t;
 }
@@ -196,16 +198,16 @@ void Tree_free(Tree *self) {
 	free(self);
 }
 
-bool Tree_valid_index(int i) {
+bool Tree_valid_id(int i) {
 	return (i >= 0 && i <= NODE_LOOKUP_SIZE - 1);
-}
-
-bool Tree_exists_node(Tree *self, int id) {
-	return Tree_valid_index(id) && self->node_lookup[id] != NULL;
 }
 
 TreeNode *Tree_get(Tree *self, int id) {
 	return self->node_lookup[id];
+}
+
+bool Tree_exists_node(Tree *self, int id) {
+	return Tree_valid_id(id) && Tree_get(self, id) != NULL;
 }
 
 bool Tree_add_node(struct Tree *self, int parent_id, int id) {

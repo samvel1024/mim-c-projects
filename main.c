@@ -29,8 +29,7 @@ void fake_printf(const char *format, ...) {
 #define COMM_ADD_ITEM "addMovie"
 #define COMM_DEL_ITEM "delMovie"
 #define COMM_QUERY "marathon"
-#define DOUBLE_ARG_REGEX "^(addUser|delMovie|addMovie|marathon) ([1-9][0-9]*|0) ([1-9][0-9]*|0)$"
-#define SINGLE_ARG_REGEX "^(delUser) ([1-9]*\\d*|0)$"
+#define REGEX "^((addUser|delMovie|addMovie|marathon) ([1-9][0-9]*|0) ([1-9][0-9]*|0))|((delUser) ([1-9][0-9]*|0))$"
 
 typedef struct command_t {
 	char comm_name[LINE_BUF_SIZE];
@@ -46,24 +45,6 @@ Command *Command_new() {
 	return c;
 }
 
-bool Command_matches_pattern(const char *string, char *pattern) {
-	int status;
-	regex_t re;
-	if (regcomp(&re, pattern, REG_EXTENDED) != 0) {
-		return false;
-	}
-	status = regexec(&re, string, (size_t) 0, NULL, 0);
-	regfree(&re);
-	if (status != 0) {
-		return false;
-	}
-	return true;
-}
-
-bool Command_is_valid_line(const char *line) {
-	return Command_matches_pattern(line, SINGLE_ARG_REGEX) || Command_matches_pattern(line, DOUBLE_ARG_REGEX);
-}
-
 bool Command_is_single_arg(char *name) {
 	return strcmp(name, COMM_DEL_USER) == 0;
 }
@@ -76,6 +57,7 @@ typedef struct parser_t {
 	bool has_next;
 	char line_buff[LINE_BUF_SIZE];
 	Command *com_buff;
+	regex_t matcher;
 } Parser;
 
 bool Parser_read(Parser *self) {
@@ -98,13 +80,21 @@ Parser *Parser_new() {
 	p->buff = '\n';
 	p->row = 0;
 	p->col = 0;
+	regcomp(&p->matcher, REGEX, REG_EXTENDED);
 	Parser_read(p);
 	return p;
 }
 
+bool Parser_is_valid_line(Parser *parser, const char *string) {
+	int status = regexec(&parser->matcher, string, (size_t) 0, NULL, 0);
+	return status == 0;
+}
+
+
 void Parser_free(Parser *self) {
 	free(self->com_buff);
 	free(self);
+	regfree(&self->matcher);
 }
 
 
@@ -135,7 +125,7 @@ void Parser_read_word(const char *source, char *target, int *source_i) {
 
 bool Parser_read_and_validate(Parser *self) {
 	Parser_read_line(self, self->line_buff);
-	if (!Command_is_valid_line(self->line_buff))
+	if (!Parser_is_valid_line(self, self->line_buff))
 		return false;
 	int line_index = 0;
 	Parser_read_word(self->line_buff, self->com_buff->comm_name, &line_index);
@@ -207,7 +197,7 @@ void Parser_handle_next_line(Parser *self, struct Tree *t) {
 	long arg1 = strtol(com->arg1, 0, 10);
 	long arg2 = Command_is_single_arg(com->comm_name) ? 0 : strtol(com->arg2, 0, 10);
 
-	if (arg1 > INT_MAX || arg2 > INT_MAX){
+	if (arg1 > INT_MAX || arg2 > INT_MAX) {
 		Parser_print_status(false);
 		return;
 	}

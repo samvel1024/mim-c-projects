@@ -87,6 +87,7 @@ Parser *Parser_new() {
 	p->buff = '\n';
 	p->row = 0;
 	p->col = 0;
+	p->matcher = malloc(sizeof(regex_t));
 	regcomp(p->matcher, REGEX, REG_EXTENDED);
 	Parser_read(p);
 	return p;

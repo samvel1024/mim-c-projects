@@ -193,6 +193,7 @@ void Parser_handle_next_line(Parser *self, struct Tree *t) {
 		return;
 	}
 	Command *com = self->com_buff;
+	Tree_free()
 
 	long arg1 = strtol(com->arg1, 0, 10);
 	long arg2 = Command_is_single_arg(com->comm_name) ? 0 : strtol(com->arg2, 0, 10);

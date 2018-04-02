@@ -9,8 +9,45 @@
 #define NODE_LOOKUP_SIZE 65536
 
 
-/********************* Doubly Linked List *******************************/
+/********************* ListNode definitions *******************************/
 
+/**
+ *
+ * @param val
+ * Pointer to the item to be stored in the list
+ * @return
+ * Not linked ListNode instance
+ */
+struct ListNode *ListNode_new(void *val);
+/**
+ * Convenience method for adding integers
+ * @param val
+ * int value to be stored
+ * @return
+ */
+struct ListNode *ListNode_new_int(int val);
+/**
+ * Links a chain of ListNodes with head and tail after self assuming that all
+ * nodes from new_head to new_tail are linked
+ * @param self
+ * @param new_head
+ * @param new_tail
+ */
+void ListNode_add_after(struct ListNode *self, struct ListNode *new_head, struct ListNode *new_tail);
+/**
+ * Unlinks self from neighbour nodes
+ * @param self
+ */
+void ListNode_unlink(struct ListNode *self);
+/**
+ * Convenience method to get the value of the node as int
+ * @param self
+ * @return
+ */
+int ListNode_as_int(struct ListNode *self);
+
+
+/********************* ListNode implementation *******************************/
 typedef struct ListNode {
 	void *val;
 	struct ListNode *prev;
@@ -38,7 +75,7 @@ void ListNode_add_after(ListNode *self, ListNode *new_head, ListNode *new_tail) 
 	self->next = new_head;
 }
 
-void ListNode_remove(ListNode *self) {
+void ListNode_unlink(ListNode *self) {
 	self->prev->next = self->next;
 	self->next->prev = self->prev;
 }
@@ -47,6 +84,48 @@ int ListNode_as_int(ListNode *self) {
 	return *((int *) self->val);
 }
 
+/********************* LinkedList definitions *******************************/
+
+/**
+ * The implementation below stores two sentinel nodes
+ * for head and tail of the doubly linked list
+ */
+
+/**
+ * @return
+ * Initialized LinkedList with sentinel nodes linked together
+ */
+struct LinkedList *LinkedList_new();
+/**
+ * @param self
+ * @param destruct
+ * Destructor function for each ListNode value for performing deep free.
+ * A shallow free will be performed once NULL is passed
+ */
+void LinkedList_free(struct LinkedList *self, void (*destruct)(void *));
+/**
+ * @param self
+ * @return
+ * True if self has no elements
+ */
+bool LinkedList_is_empty(struct LinkedList *self);
+/**
+ * @param self
+ * @param val
+ * @return
+ * Newly created ListNode which is linked to the end of the list
+ */
+ListNode *LinkedList_push_tail(struct LinkedList *self, void *val);
+/**
+ * @param self
+ * @param val
+ * @return
+ * Inserts integer into the list preserving the descending sorted order
+ */
+ListNode *LinkedList_insert_sorted_desc(struct LinkedList *self, int val);
+
+
+/********************* LinkedList implementation *******************************/
 
 typedef struct LinkedList {
 	ListNode *head;
@@ -62,15 +141,10 @@ LinkedList *LinkedList_new() {
 	return ll;
 }
 
-void LinkedList_shallow_free(LinkedList *self) {
-	free(self->head);
-	free(self->tail);
-	free(self);
-}
 
-void LinkedList_deep_free(LinkedList *self, void (*destruct)(void *)) {
+void LinkedList_free(LinkedList *self, void (*destruct)(void *)) {
 	ListNode *curr = self->head->next;
-	while (curr != self->tail) {
+	while (destruct != NULL && curr != self->tail) {
 		ListNode *next = curr->next;
 		destruct(curr->val);
 		free(curr);
@@ -111,56 +185,38 @@ ListNode *LinkedList_insert_sorted_desc(LinkedList *self, int val) {
 }
 
 
-bool LinkedList_equal(LinkedList *self, int arr[]) {
-	assert(self->head->val == NULL);
-	assert(self->tail->val == NULL);
-	int index = 0;
-	ListNode *n = self->head->next;
-	while (n != self->tail) {
-		assert(ListNode_as_int(n) == arr[index]);
-		++index;
-		n = n->next;
-	}
-	return true;
-}
 
-
-void TEST_linkedListImpl() {
-	LinkedList *ll = LinkedList_new();
-	LinkedList_insert_sorted_desc(ll, 0);
-	LinkedList_insert_sorted_desc(ll, 2);
-	LinkedList_insert_sorted_desc(ll, 1);
-	int order[] = {2, 1, 0};
-	assert(LinkedList_equal(ll, order));
-	LinkedList_deep_free(ll, free);
-}
-
-
-/********************* Tree *******************************/
-
-
+/********************* Tree Node implementation ************************/
 
 typedef struct TreeNode {
 	LinkedList *items;
 	LinkedList *children;
 	ListNode *in_parent;
-	int id;
 } TreeNode;
 
-TreeNode *TreeNode_new(int id) {
+/**
+ * Constructor
+ */
+TreeNode *TreeNode_new() {
 	TreeNode *t = malloc(sizeof(TreeNode));
 	t->children = LinkedList_new();
 	t->items = LinkedList_new();
 	t->in_parent = NULL;
-	t->id = id;
 	return t;
 };
 
+/**
+ * Used as a destruction strategy for deep freeing LinkedList of TreeNodes
+ */
 void TreeNode_free_adapt_void(void *ptr);
 
+/**
+ * Deep free the node (including all nested fields)
+ * @param self
+ */
 void TreeNode_free(TreeNode *self) {
-	LinkedList_deep_free(self->items, free);
-	LinkedList_deep_free(self->children, TreeNode_free_adapt_void);
+	LinkedList_free(self->items, free);
+	LinkedList_free(self->children, TreeNode_free_adapt_void);
 	free(self);
 }
 
@@ -168,12 +224,16 @@ void TreeNode_free_adapt_void(void *ptr) {
 	TreeNode_free((TreeNode *) ptr);
 }
 
-
+/**
+ * Links child node to the parent
+ */
 void TreeNode_add_child(TreeNode *parent, TreeNode *child) {
 	ListNode *ref = LinkedList_push_tail(parent->children, child);
 	child->in_parent = ref;
 }
 
+
+/********************* Tree implementation*******************************/
 
 typedef struct Tree {
 	TreeNode *root;
@@ -183,7 +243,7 @@ typedef struct Tree {
 
 Tree *Tree_new() {
 	Tree *t = malloc(sizeof(Tree));
-	TreeNode *root = TreeNode_new(0);
+	TreeNode *root = TreeNode_new();
 	t->root = root;
 	t->node_lookup = malloc(NODE_LOOKUP_SIZE * sizeof(void *));
 	for (int i = 0; i < NODE_LOOKUP_SIZE; ++i)
@@ -198,7 +258,7 @@ void Tree_free(Tree *self) {
 	free(self);
 }
 
-bool Tree_valid_id(int i) {
+bool Tree_is_valid_id(int i) {
 	return (i >= 0 && i <= NODE_LOOKUP_SIZE - 1);
 }
 
@@ -207,33 +267,33 @@ TreeNode *Tree_get(Tree *self, int id) {
 }
 
 bool Tree_exists_node(Tree *self, int id) {
-	return Tree_valid_id(id) && Tree_get(self, id) != NULL;
+	return Tree_is_valid_id(id) && Tree_get(self, id) != NULL;
 }
 
 bool Tree_add_node(struct Tree *self, int parent_id, int id) {
 	if (!Tree_exists_node(self, parent_id) || Tree_exists_node(self, id)) return false;
 
 	TreeNode *parent = Tree_get(self, parent_id);
-	TreeNode *child = TreeNode_new(id);
+	TreeNode *child = TreeNode_new();
 	TreeNode_add_child(parent, child);
 	self->node_lookup[id] = child;
 
 	return true;
 }
 
-bool Tree_remove_node(struct Tree *self, int rem_id) {
-	if (rem_id == 0 || !Tree_exists_node(self, rem_id)) return false;
-	TreeNode *node = Tree_get(self, rem_id);
+bool Tree_remove_node(struct Tree *self, int node_id) {
+	if (node_id == 0 || !Tree_exists_node(self, node_id)) return false;
+	TreeNode *node = Tree_get(self, node_id);
 
 	if (!LinkedList_is_empty(node->children))
 		ListNode_add_after(node->in_parent, node->children->head->next, node->children->tail->prev);
 
-	ListNode_remove(node->in_parent);
+	ListNode_unlink(node->in_parent);
 	free(node->in_parent);
-	LinkedList_shallow_free(node->children);
-	LinkedList_deep_free(node->items, free);
+	LinkedList_free(node->children, NULL);
+	LinkedList_free(node->items, free);
 	free(node);
-	self->node_lookup[rem_id] = NULL;
+	self->node_lookup[node_id] = NULL;
 	return true;
 }
 
@@ -254,7 +314,7 @@ bool Tree_remove_item(Tree *self, int node_id, int item) {
 	while (!found && rem != node->items->tail) {
 		int val = ListNode_as_int(rem);
 		if (val == item) {
-			ListNode_remove(rem);
+			ListNode_unlink(rem);
 			free(rem->val);
 			free(rem);
 			found = true;
@@ -263,7 +323,9 @@ bool Tree_remove_item(Tree *self, int node_id, int item) {
 	return found;
 }
 
-
+/**
+ * Writes elements stored in node into items preserving sorted order up to limit
+ */
 void TreeNode_collect_items(TreeNode *node, int items[], int limit, int min) {
 	int count = 0;
 	ListNode *curr = node->items->head->next;
@@ -275,6 +337,9 @@ void TreeNode_collect_items(TreeNode *node, int items[], int limit, int min) {
 		items[count++] = EMPTY_ITEM;
 }
 
+/**
+ * Merges arrays a and b into dest preserving sorted order
+ */
 void merge_sorted(int dest[], const int a[], const int b[], int len) {
 	int ai = 0, bi = 0, di = 0;
 	while (ai < len && bi < len && di < len) {
@@ -295,14 +360,17 @@ void merge_sorted(int dest[], const int a[], const int b[], int len) {
 		dest[di++] = b[bi++];
 }
 
-
+/**
+ * Recursive helper function
+ * Writes the result of the query into ans
+ */
 void TreeNode_collect_recursive(TreeNode *curr, int parent_max, int limit, int ans[]) {
 	TreeNode_collect_items(curr, ans, limit, parent_max);
-
 
 	int my_max = LinkedList_is_empty(curr->items) ? parent_max : ListNode_as_int(curr->items->head->next);
 	int max = parent_max > my_max ? parent_max : my_max;
 
+	//Initialize helper arrays for merging
 	int *child_buff = malloc(sizeof(int) * limit);
 	int *ans_aux = malloc(sizeof(int) * limit);
 	int *merge_aux = malloc(sizeof(int) * limit);
@@ -336,76 +404,3 @@ bool Tree_extract_max(Tree *self, int node_id, int limit, int ans[]) {
 		ans[0] = EMPTY_ITEM;
 	return true;
 }
-
-
-void TEST_TreeExtractMax() {
-	Tree *t = Tree_new();
-	Tree_add_node(t, 0, 2);
-	Tree_add_node(t, 2, 1);
-
-	Tree_add_item(t, 0, 1337);
-	Tree_add_item(t, 0, 1410);
-	Tree_add_item(t, 2, 1683);
-	Tree_add_item(t, 1, 2018);
-
-	int ans[] = {1, 2, 3};
-	Tree_extract_max(t, 0, 3, ans);
-}
-
-
-void TEST_treeRemoveAndInsert() {
-	Tree *t = Tree_new();
-	assert(Tree_add_node(t, 0, 1));
-	assert(Tree_add_node(t, 0, 2));
-	assert(Tree_add_node(t, 0, 3));
-	assert(Tree_add_node(t, 0, 10));
-	assert(Tree_add_node(t, 0, 4));
-	assert(Tree_add_node(t, 1, 5));
-	assert(Tree_add_node(t, 2, 6));
-	assert(Tree_add_node(t, 3, 7));
-	assert(Tree_add_node(t, 4, 8));
-	assert(Tree_add_node(t, 4, 9));
-
-	assert(Tree_add_item(t, 0, 3));
-	assert(Tree_add_item(t, 0, 1));
-	assert(Tree_add_item(t, 0, 2));
-	assert(Tree_add_item(t, 1, 6));
-	assert(Tree_add_item(t, 1, 7));
-	assert(Tree_add_item(t, 1, 9));
-	assert(Tree_add_item(t, 1, 10));
-	assert(Tree_add_item(t, 10, 11));
-	assert(Tree_add_item(t, 10, 12));
-
-	assert(Tree_remove_node(t, 1));
-	assert(Tree_remove_node(t, 2));
-	assert(Tree_remove_node(t, 3));
-	assert(Tree_remove_node(t, 4));
-	assert(Tree_remove_node(t, 5));
-	assert(Tree_remove_node(t, 6));
-	assert(Tree_remove_node(t, 7));
-	assert(Tree_remove_node(t, 8));
-	assert(Tree_remove_node(t, 9));
-	assert(Tree_remove_node(t, 10));
-
-	assert(LinkedList_is_empty(t->root->children));
-	LinkedList_shallow_free(t->root->children);
-	LinkedList_shallow_free(t->root->items);
-	free(t->root);
-	free(t->node_lookup);
-	free(t);
-}
-
-void TEST_merge() {
-	int a[] = {1, 2, 3, 4};
-	int b[] = {4, 3, 0, -1};
-	int c[] = {5, 4, -1, -1};
-	merge_sorted(a, b, c, 4);
-
-}
-
-//int main() {
-//	TEST_merge();
-////	TEST_TreeExtractMax();
-//	return 0;
-//}
-

@@ -185,7 +185,7 @@ Tree *Tree_new() {
 	Tree *t = malloc(sizeof(Tree));
 	TreeNode *root = TreeNode_new(0);
 	t->root = root;
-	t->node_lookup = malloc(NODE_LOOKUP_SIZE * sizeof(void*));
+	t->node_lookup = malloc(NODE_LOOKUP_SIZE * sizeof(void *));
 	for (int i = 0; i < NODE_LOOKUP_SIZE; ++i)
 		t->node_lookup[i] = NULL;
 	t->node_lookup[0] = root;
@@ -297,26 +297,34 @@ void merge_sorted(int dest[], const int a[], const int b[], int len) {
 
 
 void TreeNode_collect_recursive(TreeNode *curr, int parent_max, int limit, int ans[]) {
-
 	TreeNode_collect_items(curr, ans, limit, parent_max);
 
+	if (LinkedList_is_empty(curr->children))
+		return;
 
-	int my_max = LinkedList_is_empty(curr->items) ? parent_max : ListNode_as_int(curr->items->head->next);
-	my_max = parent_max > my_max ? parent_max : my_max;
+	int my_max = ListNode_as_int(curr->items->head->next);
+	int max = parent_max > my_max ? parent_max : my_max;
 
-	int *buff1 = malloc(sizeof(int) * limit);
-	int *buff2 = malloc(sizeof(int) * limit);
+	int *child_buff = malloc(sizeof(int) * limit);
+	int *ans_aux = malloc(sizeof(int) * limit);
+	int *merge_aux = malloc(sizeof(int) * limit);
+	memcpy(ans_aux, ans, sizeof(int) * limit);
 
 	ListNode *child = curr->children->head->next;
 	while (child != curr->children->tail) {
-		memcpy(buff1, ans, sizeof(int) * limit);
-		TreeNode_collect_recursive((TreeNode *) (child->val), my_max, limit, buff2);
-		merge_sorted(ans, buff1, buff2, limit);
+		TreeNode_collect_recursive((TreeNode *) (child->val), max, limit, child_buff);
+		merge_sorted(merge_aux, child_buff, ans_aux, limit);
 		child = child->next;
+
+		int *tmp = merge_aux;
+		merge_aux = ans_aux;
+		ans_aux = tmp;
 	}
 
-	free(buff1);
-	free(buff2);
+	memcpy(ans, ans_aux, sizeof(int) * limit);
+	free(ans_aux);
+	free(child_buff);
+	free(merge_aux);
 
 }
 

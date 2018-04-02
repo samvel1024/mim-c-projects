@@ -279,8 +279,8 @@ void merge_sorted(int dest[], const int a[], const int b[], int len) {
 			dest[di++] = b[bi++];
 		else {
 			int val = b[bi];
-			while (bi < len && b[bi++] == val);
-			while (ai < len && a[ai++] == val);
+			while (bi < len && b[bi] == val) ++bi;
+			while (ai < len && a[ai] == val) ++ai;
 			dest[di++] = val;
 		}
 	}
@@ -297,8 +297,7 @@ void TreeNode_collect_recursive(TreeNode *curr, int parent_max, int limit, int a
 
 
 	int my_max = LinkedList_is_empty(curr->items) ? parent_max : ListNode_as_int(curr->items->head->next);
-	if (my_max < parent_max)
-		return;
+	my_max = parent_max > my_max ? parent_max : my_max;
 
 	int *buff1 = malloc(sizeof(int) * limit);
 	int *buff2 = malloc(sizeof(int) * limit);
@@ -385,8 +384,17 @@ void TEST_treeRemoveAndInsert() {
 	free(t);
 }
 
+void TEST_merge() {
+	int a[] = {1, 2, 3, 4};
+	int b[] = {4, 3, 0, -1};
+	int c[] = {5, 4, -1, -1};
+	merge_sorted(a, b, c, 4);
+
+}
+
 //int main() {
-//	TEST_TreeExtractMax();
+//	TEST_merge();
+////	TEST_TreeExtractMax();
 //	return 0;
 //}
 

@@ -1,42 +1,17 @@
-addUser 0 1
 addUser 0 2
+addUser 0 3
+addUser 0 6
 
-addUser 1 3
-addUser 1 4
-addUser 1 5
+addMovie 0 0
+addMovie 0 3
 
-addUser 2 6
-addUser 2 7
+addMovie 2 2
 
-addMovie 0 7
-addMovie 0 8
-addMovie 0 9
-addMovie 0 10
+addMovie 3 4
+addMovie 3 1
+addMovie 3 0
 
-addMovie 1 8
-addMovie 1 9
-addMovie 1 25
+addMovie 6 5
+addMovie 6 4
 
-addMovie 2 5
-addMovie 2 8
-addMovie 2 9
-
-addMovie 3 7
-addMovie 3 25
-addMovie 3 28
-
-addMovie 4 3
-addMovie 4 9
-addMovie 4 30
-
-addMovie 5 14
-addMovie 5 6
-
-addMovie 6 0
-addMovie 6 1
-
-addMovie 7 7
-addMovie 7 9
-addMovie 7 27
-
-marathon 0 6
+marathon 0 4

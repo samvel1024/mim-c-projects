@@ -20,13 +20,13 @@ for f in ./*.in; do
   test=${f%.*}
   expect_stderr="${test}.err"
   expect_stdout="${test}.out"
-  printf "Test ${test} "
+  printf "_______________Test ${test} "
   cat ${f} | ../${prog} 2> ../temperr 1> ../tempout
-  diff "../_temp_stdout" ${expect_stdout}
-  diff "../_temp_stderr" ${expect_stderr}
+  diff "../tempout" ${expect_stdout} || true
+#  diff "../temperr" ${expect_stderr} || true
   echo "OK"
 done
 
 #If there are no errors remove temporary files
-rm -rf "../_temp_stderr"
-rm -rf "../_temp_stdout"
+rm -rf "../temperr"
+rm -rf "../tempout"

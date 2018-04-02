@@ -8,3 +8,4 @@
 !tree.h
 !/tests
 !/tests/*
+!makefile

@@ -19,6 +19,7 @@
  * Not linked ListNode instance
  */
 struct ListNode *ListNode_new(void *val);
+
 /**
  * Convenience method for adding integers
  * @param val
@@ -26,6 +27,7 @@ struct ListNode *ListNode_new(void *val);
  * @return
  */
 struct ListNode *ListNode_new_int(int val);
+
 /**
  * Links a chain of ListNodes with head and tail after self assuming that all
  * nodes from new_head to new_tail are linked
@@ -34,11 +36,13 @@ struct ListNode *ListNode_new_int(int val);
  * @param new_tail
  */
 void ListNode_add_after(struct ListNode *self, struct ListNode *new_head, struct ListNode *new_tail);
+
 /**
  * Unlinks self from neighbour nodes
  * @param self
  */
 void ListNode_unlink(struct ListNode *self);
+
 /**
  * Convenience method to get the value of the node as int
  * @param self
@@ -96,6 +100,7 @@ int ListNode_as_int(ListNode *self) {
  * Initialized LinkedList with sentinel nodes linked together
  */
 struct LinkedList *LinkedList_new();
+
 /**
  * @param self
  * @param destruct
@@ -109,6 +114,7 @@ void LinkedList_free(struct LinkedList *self, void (*destruct)(void *));
  * True if self has no elements
  */
 bool LinkedList_is_empty(struct LinkedList *self);
+
 /**
  * @param self
  * @param val
@@ -116,6 +122,7 @@ bool LinkedList_is_empty(struct LinkedList *self);
  * Newly created ListNode which is linked to the end of the list
  */
 ListNode *LinkedList_push_tail(struct LinkedList *self, void *val);
+
 /**
  * @param self
  * @param val
@@ -183,7 +190,6 @@ ListNode *LinkedList_insert_sorted_desc(LinkedList *self, int val) {
 	ListNode_add_after(curr, new_node, new_node);
 	return new_node;
 }
-
 
 
 /********************* Tree Node implementation ************************/
@@ -358,6 +364,8 @@ void merge_sorted(int dest[], const int a[], const int b[], int len) {
 		dest[di++] = a[ai++];
 	while (bi < len && di < len)
 		dest[di++] = b[bi++];
+	while (di < len)
+		dest[di++] = EMPTY_ITEM;
 }
 
 /**

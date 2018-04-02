@@ -6,6 +6,8 @@
 #include <memory.h>
 #include "tree.h"
 
+#define NODE_LOOKUP_SIZE 65536
+
 
 /********************* Doubly Linked List *******************************/
 
@@ -137,7 +139,6 @@ void TEST_linkedListImpl() {
 /********************* Tree *******************************/
 
 
-#define NODE_LOOKUP_SIZE 1000
 
 typedef struct TreeNode {
 	LinkedList *items;
@@ -196,7 +197,7 @@ void Tree_free(Tree *self) {
 }
 
 bool Tree_valid_index(int i) {
-	return (i >= 0 && i <= NODE_LOOKUP_SIZE);
+	return (i >= 0 && i <= NODE_LOOKUP_SIZE - 1);
 }
 
 bool Tree_exists_node(Tree *self, int id) {
@@ -255,8 +256,7 @@ bool Tree_remove_item(Tree *self, int node_id, int item) {
 			free(rem->val);
 			free(rem);
 			found = true;
-		}
-		else rem = rem->next;
+		} else rem = rem->next;
 	}
 	return found;
 }

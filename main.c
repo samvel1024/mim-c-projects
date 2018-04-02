@@ -23,7 +23,7 @@ void fake_printf(const char *format, ...) {
 	UNUSED(format);
 }
 
-#define LINE_BUF_SIZE 65600
+#define LINE_BUF_SIZE 100
 #define COMM_ADD_NODE "addUser"
 #define COMM_DEL_USER "delUser"
 #define COMM_ADD_ITEM "addMovie"

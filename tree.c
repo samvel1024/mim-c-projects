@@ -22,6 +22,12 @@ ListNode *ListNode_new(void *val) {
 	return l;
 }
 
+ListNode *ListNode_new_int(int val) {
+	int *ptr = malloc(sizeof(int));
+	*ptr = val;
+	return ListNode_new(ptr);
+}
+
 void ListNode_add_after(ListNode *self, ListNode *new_head, ListNode *new_tail) {
 	ListNode *next = self->next;
 	next->prev = new_tail;
@@ -86,9 +92,6 @@ ListNode *LinkedList_push_tail(LinkedList *self, void *val) {
 }
 
 ListNode *LinkedList_insert_sorted_desc(LinkedList *self, int val) {
-	int *ptr = malloc(sizeof(int));
-	*ptr = val;
-	ListNode *new_node = ListNode_new(ptr);
 	ListNode *curr = self->head;
 
 	while (curr->next != self->tail) {
@@ -100,6 +103,7 @@ ListNode *LinkedList_insert_sorted_desc(LinkedList *self, int val) {
 		curr = curr->next;
 	}
 
+	ListNode *new_node = ListNode_new_int(val);
 	ListNode_add_after(curr, new_node, new_node);
 	return new_node;
 }
@@ -217,7 +221,6 @@ bool Tree_add_node(struct Tree *self, int parent_id, int id) {
 bool Tree_remove_node(struct Tree *self, int rem_id) {
 	if (rem_id == 0 || !Tree_exists_node(self, rem_id)) return false;
 	TreeNode *node = Tree_get(self, rem_id);
-	if (node == NULL) return false;
 
 	if (!LinkedList_is_empty(node->children))
 		ListNode_add_after(node->in_parent, node->children->head->next, node->children->tail->prev);
@@ -253,7 +256,7 @@ bool Tree_remove_item(Tree *self, int node_id, int item) {
 			free(rem);
 			found = true;
 		}
-		rem = rem->next;
+		else rem = rem->next;
 	}
 	return found;
 }

@@ -24,7 +24,7 @@ for f in ./*.in; do
   cat ${f} | ../${prog} 2> ../temperr 1> ../tempout
   diff "../tempout" ${expect_stdout} || true
 #  diff "../temperr" ${expect_stderr} || true
-  echo "OK"
+  echo "PASSED"
 done
 
 #If there are no errors remove temporary files

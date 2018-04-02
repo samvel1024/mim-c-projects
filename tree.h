@@ -1,5 +1,9 @@
 #ifndef TREE_H
 #define TREE_H
+
+/*
+ * Used to denote empty elemnts in query result
+ */
 #define EMPTY_ITEM (-1)
 
 #include <stdbool.h>

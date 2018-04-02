@@ -8,7 +8,8 @@
 #include <limits.h>
 #include "tree.h"
 
-//#define MODE_DEBUG
+
+/******************(to enable MODE_DEBUG flag should be passed)*******************************/
 #ifdef MODE_DEBUG
 #define log printf
 #define DECORATE_STDOUT true
@@ -18,10 +19,11 @@
 #endif
 #define UNUSED(x) (void)(x)
 
-
 void fake_printf(const char *format, ...) {
 	UNUSED(format);
 }
+/****************** End debug region *********************************************/
+
 
 #define LINE_BUF_SIZE 100
 #define COMM_ADD_NODE "addUser"
@@ -51,15 +53,18 @@ bool Command_is_single_arg(char *name) {
 
 
 typedef struct parser_t {
-	int row;
-	int col;
-	char buff;
-	bool has_next;
-	char line_buff[LINE_BUF_SIZE];
-	Command *com_buff;
-	regex_t matcher;
+	int row; //debug
+	int col; //debug
+	char buff; // upcoming char
+	bool has_next; // EOF reached or not
+	char line_buff[LINE_BUF_SIZE]; // used to read the full line
+	Command *com_buff; // used to parse the store the current command
+	regex_t matcher; // regex matcher
 } Parser;
 
+/**
+ * Reads the next char in stdin
+ */
 bool Parser_read(Parser *self) {
 	if (!self->has_next) return false;
 	if (self->buff == '\n')
@@ -71,7 +76,9 @@ bool Parser_read(Parser *self) {
 	return self->has_next;
 }
 
-
+/**
+ * Constructor
+ */
 Parser *Parser_new() {
 	Parser *p = malloc(sizeof(Parser));
 	p->has_next = true;
@@ -85,55 +92,72 @@ Parser *Parser_new() {
 	return p;
 }
 
-bool Parser_is_valid_line(Parser *parser, const char *string) {
-	int status = regexec(&parser->matcher, string, (size_t) 0, NULL, 0);
+/**
+ * Checks for syntax errors in the line
+ */
+bool Parser_is_valid_line(Parser *parser) {
+	int status = regexec(&parser->matcher, parser->line_buff, (size_t) 0, NULL, 0);
 	return status == 0;
 }
 
-
+/**
+ * Destructor
+ */
 void Parser_free(Parser *self) {
 	free(self->com_buff);
 	free(self);
 	regfree(&self->matcher);
 }
 
-
+/**
+ * Used for skipping empty lines, comments, and long invalid lines
+ */
 void Parser_skip_line(Parser *self) {
 	while (self->has_next && self->buff != '\n')
 		Parser_read(self);
 	Parser_read(self); //Read the first char of the next line
 }
 
-void Parser_read_line(Parser *self, char *buff) {
+/**
+ * Reads up to the end of th eline and stores in self->line_buff
+ */
+void Parser_read_line(Parser *self) {
 	int i = 0;
 	while (i <= LINE_BUF_SIZE - 1 && self->buff != '\n' && self->has_next) {
-		buff[i++] = self->buff;
+		self->line_buff[i++] = self->buff;
 		Parser_read(self);
 	}
-	buff[i] = '\0';
-	if (self->buff != '\n')
+	self->line_buff[i] = '\0';
+	if (self->buff != '\n') //the line is too long and redundant
 		Parser_skip_line(self);
 }
 
-void Parser_read_word(const char *source, char *target, int *source_i) {
+/**
+ * Used for breaking down self->line_buff into separate words with delimeter ' '
+ */
+void Parser_read_word(Parser *self, char *target, int *source_i) {
 	int i = 0;
-	while (source[*source_i] != '\0' && source[*source_i] != ' ') {
-		target[i++] = source[(*source_i)++];
+	while (self->line_buff[*source_i] != '\0' && self->line_buff[*source_i] != ' ') {
+		target[i++] = self->line_buff[(*source_i)++];
 	}
 	target[i] = '\0';
 }
 
+/**
+ * @return
+ * true if line was valid
+ */
 bool Parser_read_and_validate(Parser *self) {
-	Parser_read_line(self, self->line_buff);
-	if (!Parser_is_valid_line(self, self->line_buff))
+	Parser_read_line(self);
+	if (!Parser_is_valid_line(self))
 		return false;
 	int line_index = 0;
-	Parser_read_word(self->line_buff, self->com_buff->comm_name, &line_index);
+	Parser_read_word(self, self->com_buff->comm_name, &line_index);
 	++line_index;
-	Parser_read_word(self->line_buff, self->com_buff->arg1, &line_index);
+	Parser_read_word(self, self->com_buff->arg1, &line_index);
 	++line_index;
 	if (!Command_is_single_arg(self->com_buff->comm_name))
-		Parser_read_word(self->line_buff, self->com_buff->arg2, &line_index);
+		Parser_read_word(self, self->com_buff->arg2, &line_index);
 	return true;
 }
 
@@ -145,6 +169,10 @@ void Parser_print_status(bool ok) {
 }
 
 void Parser_print_query_result(int res[], int limit) {
+	if (res[0] == EMPTY_ITEM) {
+		printf("NONE\n");
+		return;
+	}
 	for (int i = 0; i < limit && res[i] != -1; ++i) {
 		printf(i == 0 ? "%d" : " %d", res[i]);
 	}
@@ -162,19 +190,16 @@ void Parser_execute_command(Command *com, struct Tree *t) {
 		Parser_print_status(Tree_remove_node(t, atoi(com->arg1)));
 	} else if (strcmp(com->comm_name, COMM_QUERY) == 0) {
 		int limit = atoi(com->arg2);
+		// At least one elemnt is needed to denote empty result set
 		int *ans = malloc(sizeof(int) * ((limit > 0) ? limit : 1));
 		ans[0] = EMPTY_ITEM;
 		if (!Tree_extract_max(t, atoi(com->arg1), limit, ans)) {
 			Parser_print_status(false);
 		} else {
-			if (ans[0] == EMPTY_ITEM) {
-				printf("NONE\n");
-			} else {
-				Parser_print_query_result(ans, limit);
-			}
+			Parser_print_query_result(ans, limit);
 		}
 		free(ans);
-	} else {
+	} else { //Should no happen
 		printf("Unhandled command name %s\n", com->comm_name);
 		exit(1);
 	}
@@ -193,7 +218,6 @@ void Parser_handle_next_line(Parser *self, struct Tree *t) {
 		return;
 	}
 	Command *com = self->com_buff;
-	Tree_free()
 
 	long arg1 = strtol(com->arg1, 0, 10);
 	long arg2 = Command_is_single_arg(com->comm_name) ? 0 : strtol(com->arg2, 0, 10);
@@ -212,40 +236,7 @@ void Parser_handle_next_line(Parser *self, struct Tree *t) {
 }
 
 
-void test() {
-	int ans[100];
-	struct Tree *t = Tree_new();
-	Tree_extract_max(t, 0, 2, ans);
-	Tree_add_item(t, 0, 1337);
-	Tree_extract_max(t, 0, 2, ans);
-	Tree_add_item(t, 0, 1410);
-	Tree_add_node(t, 0, 1);
-	Tree_add_node(t, 1, 2);
-	Tree_add_item(t, 1, 1815);
-	Tree_add_item(t, 2, 1683);
-	Tree_add_item(t, 2, 1525);
-	Tree_extract_max(t, 0, 2, ans);
-
-	Tree_remove_node(t, 1);
-	Tree_remove_item(t, 2, 1525);
-	Tree_extract_max(t, 0, 2, ans);
-	Tree_add_node(t, 2, 1);
-	Tree_add_item(t, 1, 2018);
-	Tree_extract_max(t, 0, 3, ans);
-	Tree_free(t);
-}
-
-void test_free() {
-	int ans[100];
-	struct Tree *t = Tree_new();
-	Tree_add_node(t, 0, 1);
-	Tree_add_node(t, 0, 2);
-	Tree_add_node(t, 0, 3);
-	Tree_free(t);
-}
-
-
-void test_stdin() {
+int main() {
 	struct Tree *t = Tree_new();
 	Parser *p = Parser_new();
 	while (p->has_next) {
@@ -254,13 +245,3 @@ void test_stdin() {
 	Parser_free(p);
 	Tree_free(t);
 }
-
-int main() {
-
-	bool TEST = false;
-	if (TEST) test_free();
-	else test_stdin();
-//	printf("%d", Command_is_valid_line("addMovie 141 14901"));
-
-}
-

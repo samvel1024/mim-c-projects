@@ -299,10 +299,8 @@ void merge_sorted(int dest[], const int a[], const int b[], int len) {
 void TreeNode_collect_recursive(TreeNode *curr, int parent_max, int limit, int ans[]) {
 	TreeNode_collect_items(curr, ans, limit, parent_max);
 
-	if (LinkedList_is_empty(curr->children))
-		return;
 
-	int my_max = ListNode_as_int(curr->items->head->next);
+	int my_max = LinkedList_is_empty(curr->items) ? parent_max : ListNode_as_int(curr->items->head->next);
 	int max = parent_max > my_max ? parent_max : my_max;
 
 	int *child_buff = malloc(sizeof(int) * limit);
@@ -315,7 +313,7 @@ void TreeNode_collect_recursive(TreeNode *curr, int parent_max, int limit, int a
 		TreeNode_collect_recursive((TreeNode *) (child->val), max, limit, child_buff);
 		merge_sorted(merge_aux, child_buff, ans_aux, limit);
 		child = child->next;
-
+		//Swap helper array with the answer
 		int *tmp = merge_aux;
 		merge_aux = ans_aux;
 		ans_aux = tmp;

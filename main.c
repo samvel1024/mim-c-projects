@@ -6,7 +6,6 @@
 #include <string.h>
 #include <regex.h>
 #include <limits.h>
-#include "tree.h"
 
 
 /******************(to enable MODE_DEBUG flag should be passed)*******************************/

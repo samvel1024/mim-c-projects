@@ -373,7 +373,7 @@ void merge_sorted(int dest[], const int a[], const int b[], int len) {
  * Writes the result of the query into ans
  */
 void TreeNode_collect_recursive(TreeNode *curr, int parent_max, int limit,
-                                int ans[], int aux[]) {
+                                int **ans, int **aux) {
 
 	int my_max = LinkedList_is_empty(curr->items) ? parent_max : ListNode_as_int(curr->items->head->next);
 	int max = parent_max > my_max ? parent_max : my_max;
@@ -387,8 +387,10 @@ void TreeNode_collect_recursive(TreeNode *curr, int parent_max, int limit,
 		child = child->next;
 	}
 
-	merge_sorted(aux, ans, my_buff, limit);
-	memcpy(ans, aux, sizeof(int) * limit);
+	merge_sorted(*aux, *ans, my_buff, limit);
+	int *tmp = *ans;
+	*ans = *aux;
+	*aux = tmp;
 	free(my_buff);
 }
 
@@ -399,7 +401,7 @@ bool Tree_extract_max(Tree *self, int node_id, int limit, int ans[]) {
 	for (int i = 0; i < limit; ++i)
 		ans[i] = EMPTY_ITEM;
 	int *aux = malloc(sizeof(int) * limit);
-	TreeNode_collect_recursive(Tree_get(self, node_id), -1, limit, ans, aux);
+	TreeNode_collect_recursive(Tree_get(self, node_id), -1, limit, &ans, &aux);
 	free(aux);
 	return true;
 }
